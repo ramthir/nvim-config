@@ -22,7 +22,7 @@ require('lazy').setup('plugins', {
     lazy = true,   -- lazy load everything unless a plugin opts out
   },
   install = {
-    colorscheme = { 'catppuccin', 'habamax' },
+    colorscheme = { 'monokai-pro', 'habamax' },
   },
   checker = { enabled = true, notify = false },
   change_detection = { notify = false },
