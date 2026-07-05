@@ -2,7 +2,7 @@ local opt = vim.opt
 
 -- Line numbers
 opt.number = true
-opt.relativenumber = true
+opt.relativenumber = false
 opt.signcolumn = 'yes'
 
 -- Indentation
@@ -34,7 +34,6 @@ opt.undofile = true
 -- Behaviour
 opt.timeoutlen = 300
 opt.updatetime = 250
-opt.clipboard = 'unnamedplus'
 opt.splitright = true
 opt.splitbelow = true
 opt.mouse = 'a'
