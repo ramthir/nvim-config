@@ -46,16 +46,19 @@ function M.search(config)
   local pickers      = require("telescope.pickers")
   local finders      = require("telescope.finders")
   local conf         = require("telescope.config").values
-  local displayer    = require("telescope.pickers.entry_display").create({
+  local displayer = require("telescope.pickers.entry_display").create({
     separator = " ",
     items = { { width = 2 }, { remaining = true }, { remaining = true } },
   })
 
   local function make_display(entry)
+    local tags = #entry.tags > 0
+      and table.concat(vim.tbl_map(function(t) return '#' .. t end, entry.tags), ' ')
+      or ''
     return displayer({
       { entry.icon, entry.icon_hl },
       entry.title,
-      { entry.filename, "TelescopeResultsComment" },
+      { tags, 'TelescopeResultsComment' },
     })
   end
 
@@ -67,10 +70,11 @@ function M.search(config)
         return {
           value    = entry.path,
           display  = make_display,
-          ordinal  = entry.title .. " " .. entry.filename,
+          ordinal  = entry.title .. ' ' .. table.concat(vim.tbl_map(function(t) return '#' .. t end, entry.tags), ' '),
           path     = entry.path,
           title    = entry.title,
           filename = entry.filename,
+          tags     = entry.tags,
           icon     = entry.icon,
           icon_hl  = entry.icon_hl,
         }
