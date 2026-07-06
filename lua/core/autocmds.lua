@@ -4,8 +4,10 @@ local autocmd = vim.api.nvim_create_autocmd
 local general = augroup('General', { clear = true })
 
 local function set_highlights()
-  vim.api.nvim_set_hl(0, 'SpellBad',    { undercurl = true, sp = '#ff6188' })
-  vim.api.nvim_set_hl(0, 'ColorColumn', { bg = '#3a3631' })
+  vim.api.nvim_set_hl(0, 'SpellBad',      { undercurl = true, sp = '#ff6188' })
+  vim.api.nvim_set_hl(0, 'ColorColumn',   { bg = '#3a3631' })
+  vim.api.nvim_set_hl(0, 'NotesWikiLink',        { fg = '#78dce8', underline = true, sp = '#78dce8' })
+  vim.api.nvim_set_hl(0, 'NotesWikiLinkBracket', { fg = '#727072' })
 
   -- Bold text yellow, ** delimiters gray
   vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
