@@ -5,8 +5,22 @@ local general = augroup('General', { clear = true })
 
 local function set_highlights()
   vim.api.nvim_set_hl(0, 'SpellBad',    { undercurl = true, sp = '#ff6188' })
-  vim.api.nvim_set_hl(0, 'VirtColumn80',  { fg = '#5a5020' })
-  vim.api.nvim_set_hl(0, 'VirtColumn120', { fg = '#5a2020' })
+  vim.api.nvim_set_hl(0, 'ColorColumn', { bg = '#3a3631' })
+
+  -- Bold text yellow, ** delimiters gray
+  vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
+  vim.api.nvim_set_hl(0, '@markup.strong.delimiter.markdown_inline', { fg = '#5b595c' })
+
+  -- Italic text purple, * or _ delimiters gray
+  vim.api.nvim_set_hl(0, '@markup.italic.markdown_inline',           { fg = '#ab9df2', italic = true })
+  vim.api.nvim_set_hl(0, '@markup.italic.delimiter.markdown_inline', { fg = '#5b595c' })
+
+  -- Monokai Pro orange for markdown heading markers and list markers
+  local orange = '#fc9867'
+  for i = 1, 6 do
+    vim.api.nvim_set_hl(0, '@markup.heading.' .. i .. '.marker.markdown', { fg = orange, bold = true })
+  end
+  vim.api.nvim_set_hl(0, '@markup.list.markdown', { fg = orange })
 end
 autocmd('ColorScheme', { group = general, callback = set_highlights })
 set_highlights()
@@ -38,11 +52,21 @@ autocmd('BufReadPost', {
   end,
 })
 
--- Flash yanked region
+-- Flash yanked region and sync to tmux clipboard
 autocmd('TextYankPost', {
   group = general,
   callback = function()
     vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 150 })
+    if vim.v.event.operator == 'y' then
+      local text = vim.fn.getreg('"')
+      local encoded = vim.fn.system('base64 | tr -d "\n"', text)
+      if vim.env.TMUX then
+        io.write('\027Ptmux;\027\027]52;c;' .. encoded .. '\007\027\\')
+      else
+        io.write('\027]52;c;' .. encoded .. '\007')
+      end
+      io.flush()
+    end
   end,
 })
 
@@ -94,5 +118,8 @@ autocmd('FileType', {
     vim.opt_local.breakindent = true
     vim.opt_local.spell = true
     vim.opt_local.textwidth = 120
+    vim.schedule(function()
+      vim.opt_local.formatoptions:append('aw')
+    end)
   end,
 })
