@@ -3,6 +3,15 @@ local autocmd = vim.api.nvim_create_autocmd
 
 local general = augroup('General', { clear = true })
 
+local function set_highlights()
+  vim.api.nvim_set_hl(0, 'SpellBad',    { undercurl = true, sp = '#ff6188' })
+  vim.api.nvim_set_hl(0, 'VirtColumn80',  { fg = '#5a5020' })
+  vim.api.nvim_set_hl(0, 'VirtColumn120', { fg = '#5a2020' })
+end
+autocmd('ColorScheme', { group = general, callback = set_highlights })
+set_highlights()
+
+
 -- Auto-save on leaving insert mode, losing focus, or normal-mode text change
 autocmd({ 'InsertLeave', 'FocusLost', 'TextChanged' }, {
   group = general,
@@ -77,11 +86,13 @@ autocmd('FileType', {
 })
 
 autocmd('FileType', {
-  group = ft,
+  group = general,
   pattern = 'markdown',
   callback = function()
     vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true
+    vim.opt_local.breakindent = true
     vim.opt_local.spell = true
-    vim.opt_local.textwidth = 80
+    vim.opt_local.textwidth = 120
   end,
 })
