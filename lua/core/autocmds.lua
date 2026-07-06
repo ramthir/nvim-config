@@ -9,6 +9,15 @@ local function set_highlights()
   vim.api.nvim_set_hl(0, 'NotesWikiLink',        { fg = '#78dce8', underline = true, sp = '#78dce8' })
   vim.api.nvim_set_hl(0, 'NotesWikiLinkBracket', { fg = '#727072' })
 
+  -- Remove code block background
+  vim.api.nvim_set_hl(0, '@markup.raw.block',                { bg = 'NONE' })
+  vim.api.nvim_set_hl(0, '@markup.raw.block.markdown',       { bg = 'NONE' })
+  vim.api.nvim_set_hl(0, '@markup.raw.delimiter.markdown',   { bg = 'NONE', fg = '#727072' })
+  vim.api.nvim_set_hl(0, '@text.literal.block.markdown',     { bg = 'NONE' })
+
+  -- Table headers yellow
+  vim.api.nvim_set_hl(0, '@markup.heading.markdown', { fg = '#ffd866', bold = true })
+
   -- Bold text yellow, ** delimiters gray
   vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
   vim.api.nvim_set_hl(0, '@markup.strong.delimiter.markdown_inline', { fg = '#5b595c' })
