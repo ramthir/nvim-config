@@ -16,7 +16,9 @@ vim.api.nvim_set_hl(0, "NotesIconHoliday",  { fg = "#e5c07b", default = true })
 vim.api.nvim_set_hl(0, "NotesIconIdea",     { fg = "#e5c07b", default = true })
 vim.api.nvim_set_hl(0, "NotesIconDefault",  { fg = "#e5c07b", default = true })
 
-require('notes').setup({ notes_path = '~/Workspace/notes' })
+local config = { notes_path = vim.fn.expand('~/Workspace/notes') }
+require('notes').setup(config)
+require('notes.wikilinks').setup(config)
 
 vim.api.nvim_create_user_command("NotesSearch", function()
   require("notes").search()
