@@ -1,0 +1,23 @@
+local M = {}
+
+local defaults = require("notes.config").defaults
+M.config = vim.tbl_deep_extend("force", {}, defaults)
+
+function M.setup(opts)
+  M.config = vim.tbl_deep_extend("force", defaults, opts or {})
+  M.config.notes_path = vim.fn.expand(M.config.notes_path)
+end
+
+function M.search()
+  require("notes.search").search(M.config)
+end
+
+function M.grep()
+  require("notes.search").grep(M.config)
+end
+
+function M.create()
+  require("notes.create").create(M.config)
+end
+
+return M

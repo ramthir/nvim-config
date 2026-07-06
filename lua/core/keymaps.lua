@@ -40,3 +40,8 @@ map('n', '<C-u>', '<C-u>zz')
 map('n', 'n', 'nzzzv')
 map('n', 'N', 'Nzzzv')
 
+-- Notes
+map('n', '<C-n>',      '<cmd>NotesSearch<CR>', { desc = 'Find notes' })
+map('n', '<leader>ng', '<cmd>NotesGrep<CR>',   { desc = 'Grep notes' })
+map('n', '<leader>nn', '<cmd>NotesCreate<CR>', { desc = 'New note' })
+
