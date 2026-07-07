@@ -31,6 +31,7 @@ opt.showmode = false
 opt.backup = false
 opt.swapfile = false
 opt.undofile = true
+opt.autoread = true
 
 -- Behaviour
 opt.timeoutlen = 300

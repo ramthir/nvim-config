@@ -37,6 +37,17 @@ autocmd('ColorScheme', { group = general, callback = set_highlights })
 set_highlights()
 
 
+-- Return to normal mode on focus lost
+autocmd('FocusLost', {
+  group = general,
+  callback = function()
+    local mode = vim.fn.mode()
+    if mode == 'i' or mode == 'v' or mode == 'V' then
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
+    end
+  end,
+})
+
 -- Auto-save on leaving insert mode, losing focus, or normal-mode text change
 autocmd({ 'InsertLeave', 'FocusLost', 'TextChanged' }, {
   group = general,
@@ -95,6 +106,16 @@ autocmd('BufWritePre', {
 autocmd('VimResized', {
   group = general,
   command = 'tabdo wincmd =',
+})
+
+-- Auto-reload files changed outside Neovim
+autocmd({ 'FocusGained', 'BufEnter', 'CursorHold' }, {
+  group = general,
+  callback = function()
+    if vim.fn.getcmdwintype() == '' then
+      vim.cmd('checktime')
+    end
+  end,
 })
 
 -- Filetype indentation overrides
