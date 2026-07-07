@@ -24,7 +24,7 @@ return {
         yaml            = { 'prettier' },
         markdown        = { 'prettier' },
       },
-      format_on_save = function(bufnr)
+      format_after_save = function(bufnr)
         local prettier_configs = {
           '.prettierrc', '.prettierrc.json', '.prettierrc.js',
           '.prettierrc.cjs', '.prettierrc.ts', '.prettierrc.yaml',
@@ -32,7 +32,7 @@ return {
           'prettier.config.js', 'prettier.config.cjs', 'prettier.config.ts',
         }
         if not vim.fs.root(bufnr, prettier_configs) then return end
-        return { timeout_ms = 500, lsp_fallback = true }
+        return {}
       end,
     },
   },
