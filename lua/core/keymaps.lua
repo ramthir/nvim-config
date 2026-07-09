@@ -40,8 +40,30 @@ map('n', '<C-u>', '<C-u>zz')
 map('n', 'n', 'nzzzv')
 map('n', 'N', 'Nzzzv')
 
--- Terminal
-map('n', '<leader>t', '<cmd>split | wincmd j | resize 15 | terminal<CR>', { desc = 'Open terminal' })
+-- Terminal toggle
+local term_buf = nil
+local term_win = nil
+
+local function toggle_terminal()
+  if term_win and vim.api.nvim_win_is_valid(term_win) then
+    vim.api.nvim_win_hide(term_win)
+    term_win = nil
+  elseif term_buf and vim.api.nvim_buf_is_valid(term_buf) then
+    vim.cmd('split')
+    vim.cmd('wincmd j')
+    vim.cmd('resize 15')
+    vim.api.nvim_win_set_buf(0, term_buf)
+    term_win = vim.api.nvim_get_current_win()
+    vim.cmd('startinsert')
+  else
+    vim.cmd('split | wincmd j | resize 15 | terminal')
+    term_buf = vim.api.nvim_get_current_buf()
+    term_win = vim.api.nvim_get_current_win()
+    vim.cmd('startinsert')
+  end
+end
+
+map('n', '<leader>t', toggle_terminal, { desc = 'Toggle terminal' })
 map('t', '<C-\\><C-n>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 map('t', 'jk', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
