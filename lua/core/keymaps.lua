@@ -44,7 +44,7 @@ map('n', 'N', 'Nzzzv')
 local term_buf = nil
 local term_win = nil
 
-local function toggle_terminal()
+function toggle_terminal()
   if term_win and vim.api.nvim_win_is_valid(term_win) then
     vim.api.nvim_win_hide(term_win)
     term_win = nil
@@ -63,7 +63,8 @@ local function toggle_terminal()
   end
 end
 
-map('n', '<leader>t', toggle_terminal, { desc = 'Toggle terminal' })
+map('n', '<C-`>', toggle_terminal, { desc = 'Toggle terminal' })
+map('t', '<C-`>', '<C-\\><C-n><cmd>lua toggle_terminal()<CR>', { desc = 'Toggle terminal' })
 map('t', '<C-\\><C-n>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 map('t', 'jk', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
