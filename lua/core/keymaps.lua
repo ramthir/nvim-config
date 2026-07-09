@@ -40,6 +40,11 @@ map('n', '<C-u>', '<C-u>zz')
 map('n', 'n', 'nzzzv')
 map('n', 'N', 'Nzzzv')
 
+-- Terminal
+map('n', '<leader>t', '<cmd>split | wincmd j | resize 15 | terminal<CR>', { desc = 'Open terminal' })
+map('t', '<C-\\><C-n>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+map('t', 'jk', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+
 -- Notes
 map('n', '<leader>n',  '<cmd>NotesSearch<CR>', { desc = 'Find notes' })
 map('n', '<leader>ng', '<cmd>NotesGrep<CR>',   { desc = 'Grep notes' })
