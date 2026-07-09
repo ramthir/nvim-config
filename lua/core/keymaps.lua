@@ -63,8 +63,8 @@ function toggle_terminal()
   end
 end
 
-map('n', '<C-`>', toggle_terminal, { desc = 'Toggle terminal' })
-map('t', '<C-`>', '<C-\\><C-n><cmd>lua toggle_terminal()<CR>', { desc = 'Toggle terminal' })
+map('n', '<leader>t', toggle_terminal, { desc = 'Toggle terminal' })
+map('t', '<leader>t', '<C-\\><C-n><cmd>lua toggle_terminal()<CR>', { desc = 'Toggle terminal' })
 map('t', '<C-\\><C-n>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 map('t', 'jk', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
