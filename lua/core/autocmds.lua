@@ -6,6 +6,12 @@ local general = augroup('General', { clear = true })
 local function set_highlights()
   vim.api.nvim_set_hl(0, 'SpellBad',      { undercurl = true, sp = '#ff6188' })
   vim.api.nvim_set_hl(0, 'ColorColumn',   { bg = '#3a3631' })
+
+  -- Colored column rulers: 80 green, 100 yellow, 120 red (subtle tints, thin single-column width)
+  vim.api.nvim_set_hl(0, 'RulerColumn80',  { bg = '#4c5740' })
+  vim.api.nvim_set_hl(0, 'RulerColumn100', { bg = '#62563c' })
+  vim.api.nvim_set_hl(0, 'RulerColumn120', { bg = '#623845' })
+
   vim.api.nvim_set_hl(0, 'NotesWikiLink',        { fg = '#78dce8', underline = true, sp = '#78dce8' })
   vim.api.nvim_set_hl(0, 'NotesWikiLinkBracket', { fg = '#727072' })
 
@@ -35,6 +41,34 @@ local function set_highlights()
 end
 autocmd('ColorScheme', { group = general, callback = set_highlights })
 set_highlights()
+
+-- Colored column rulers at 80/100/120 (thin, one column wide, colored by threshold)
+local ruler_columns = {
+  { col = 80,  hl = 'RulerColumn80' },
+  { col = 100, hl = 'RulerColumn100' },
+  { col = 120, hl = 'RulerColumn120' },
+}
+
+local function apply_rulers()
+  if vim.bo.buftype ~= '' then return end
+  local ruler_groups = {}
+  for _, r in ipairs(ruler_columns) do
+    ruler_groups[r.hl] = true
+  end
+  for _, m in ipairs(vim.fn.getmatches()) do
+    if ruler_groups[m.group] then
+      vim.fn.matchdelete(m.id)
+    end
+  end
+  for _, r in ipairs(ruler_columns) do
+    vim.fn.matchadd(r.hl, '\\%' .. r.col .. 'v.', 0)
+  end
+end
+
+autocmd({ 'BufWinEnter', 'WinEnter', 'FileType' }, {
+  group = general,
+  callback = apply_rulers,
+})
 
 
 -- Return to normal mode on focus lost
