@@ -32,10 +32,11 @@ return {
           custom = { '.DS_Store', 'node_modules', '.git' },
         },
         git = { enable = true, ignore = false },
+        filesystem_watchers = { enable = true },
         actions = {
           open_file = {
             quit_on_open = false,
-            window_picker = { enable = true },
+            window_picker = { enable = false },
           },
         },
       })
