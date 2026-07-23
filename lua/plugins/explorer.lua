@@ -13,7 +13,19 @@ return {
       vim.g.loaded_netrw = 1
       vim.g.loaded_netrwPlugin = 1
 
+      local function on_attach(bufnr)
+        local api = require('nvim-tree.api')
+        api.config.mappings.default_on_attach(bufnr)
+
+        -- Single left click selects and opens (default nvim-tree only opens on double-click)
+        vim.keymap.set('n', '<LeftMouse>', function()
+          vim.cmd('exec "normal! \\<LeftMouse>"') -- move cursor to the clicked line first
+          api.node.open.edit()
+        end, { buffer = bufnr, desc = 'Open on single click' })
+      end
+
       require('nvim-tree').setup({
+        on_attach = on_attach,
         sort = { sorter = 'case_sensitive' },
         view = {
           width = 50,
