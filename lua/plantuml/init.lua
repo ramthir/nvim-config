@@ -95,6 +95,41 @@ local function render(lines)
   vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
   vim.bo[preview_buf].modifiable = false
   ensure_preview_win()
+
+  vim.api.nvim_buf_call(preview_buf, function()
+    vim.cmd('syntax clear')
+  end)
+end
+
+-- Extracts a short human-readable message from plantuml's stderr, e.g.
+-- "ERROR\n1\ncannot include monokai-theme.puml" -> "cannot include monokai-theme.puml".
+local function error_headline(stderr)
+  local lines = vim.split(stderr or '', '\n', { plain = true, trimempty = true })
+  return lines[#lines] or 'render failed'
+end
+
+local function render_error(result)
+  local headline = error_headline(result.stderr)
+  local lines = { 'ERROR: ' .. headline, '' }
+  vim.list_extend(lines, vim.split(result.stdout or '', '\n', { plain = true }))
+
+  ensure_preview_buf()
+  vim.bo[preview_buf].modifiable = true
+  vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
+  vim.bo[preview_buf].modifiable = false
+  ensure_preview_win()
+
+  vim.api.nvim_buf_call(preview_buf, function()
+    vim.cmd('syntax clear')
+    vim.cmd([[syntax match PlantumlPreviewErrorMarker /\^\^\^*/]])
+    vim.cmd([[syntax match PlantumlPreviewErrorText /\c\%>1l\<\(cannot\|error\|syntax error\|no diagram found\)\>.*/]])
+    vim.cmd([[syntax match PlantumlPreviewErrorHeader /\%1l.*/]])
+    vim.cmd('highlight default link PlantumlPreviewErrorMarker Error')
+    vim.cmd('highlight default link PlantumlPreviewErrorText WarningMsg')
+    vim.cmd('highlight default link PlantumlPreviewErrorHeader ErrorMsg')
+  end)
+
+  vim.notify('plantuml.preview: ' .. headline, vim.log.levels.ERROR)
 end
 
 local FORMAT_FLAGS = { txt = '-ttxt', utxt = '-tutxt' }
@@ -127,7 +162,7 @@ function M.preview(format)
     function(result)
       vim.schedule(function()
         if result.code ~= 0 then
-          vim.notify('plantuml.preview: render failed (' .. (result.stderr or 'unknown error') .. ')', vim.log.levels.ERROR)
+          render_error(result)
           return
         end
         render(vim.split(result.stdout, '\n', { plain = true }))
