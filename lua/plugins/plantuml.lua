@@ -1,5 +1,13 @@
 return {
   {
+    'aklt/plantuml-syntax',
+    -- Also loaded for markdown so its syntax/plantuml.vim is on the
+    -- runtimepath for g:markdown_fenced_languages to embed (see
+    -- treesitter.lua, which routes markdown through the legacy :syntax
+    -- engine specifically to support this).
+    ft = { 'plantuml', 'markdown' },
+  },
+  {
     dir = vim.fn.stdpath('config') .. '/lua/plantuml',
     name = 'plantuml',
     lazy = false,
