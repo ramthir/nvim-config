@@ -92,12 +92,13 @@ autocmd('TextYankPost', {
   end,
 })
 
--- Remove trailing whitespace on save
+-- Remove trailing whitespace on save, except a "Kr," sign-off line, which
+-- needs a trailing two-space hard break to render on its own line in markdown
 autocmd('BufWritePre', {
   group = general,
   callback = function()
     local pos = vim.fn.getpos('.')
-    vim.cmd([[%s/\s\+$//e]])
+    vim.cmd([[%s/^Kr,\s*$\|\s\+$/\=submatch(0) =~ '^Kr,' ? 'Kr,  ' : ''/ge]])
     vim.fn.setpos('.', pos)
   end,
 })
