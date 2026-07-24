@@ -34,6 +34,7 @@ return {
       })
 
       vim.keymap.set('n', '<leader>pv', '<cmd>PlantumlPreview<CR>', { desc = 'Preview PlantUML diagram' })
+      vim.keymap.set('n', '<A-d>', '<cmd>PlantumlPreview<CR>', { desc = 'Preview PlantUML diagram' })
     end,
   },
 }
