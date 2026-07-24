@@ -4,17 +4,37 @@ local preview_buf = nil
 local preview_win = nil
 local jar_path = nil
 
+local last_bufnr = nil
+local last_cursor_line = nil
+local last_format = nil
+local debounce_timer = vim.uv.new_timer()
+
 function M.setup(opts)
   jar_path = opts and opts.jar_path
+
+  local group = vim.api.nvim_create_augroup('PlantumlAutoPreview', { clear = true })
+  vim.api.nvim_create_autocmd('FileType', {
+    group = group,
+    pattern = { 'plantuml', 'markdown' },
+    callback = function(args)
+      vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'InsertLeave' }, {
+        group = group,
+        buffer = args.buf,
+        callback = function()
+          M._schedule_refresh(args.buf, vim.api.nvim_win_get_cursor(0)[1])
+        end,
+      })
+    end,
+  })
 end
 
 -- Finds the plantuml/puml fenced code block under the cursor in a markdown
 -- buffer, or falls back to the whole buffer for standalone .puml files.
-local function get_source()
-  local ft = vim.bo.filetype
+local function get_source(bufnr, cursor_line)
+  local ft = vim.bo[bufnr].filetype
 
   if ft == 'plantuml' then
-    return table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n')
+    return table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
   end
 
   if ft ~= 'markdown' then
@@ -22,8 +42,7 @@ local function get_source()
     return nil
   end
 
-  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
-  local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local buf_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
   local start_line
   for i = cursor_line, 1, -1 do
@@ -138,8 +157,7 @@ local FORMAT_FLAGS = { txt = '-ttxt', utxt = '-tutxt' }
 -- box-drawing, nicer but needs a UTF-8 capable terminal/font).
 function M.preview(format)
   format = format or 'txt'
-  local flag = FORMAT_FLAGS[format]
-  if not flag then
+  if not FORMAT_FLAGS[format] then
     vim.notify('plantuml.preview: unknown format "' .. format .. '" (use txt or utxt)', vim.log.levels.ERROR)
     return
   end
@@ -148,16 +166,24 @@ function M.preview(format)
     return
   end
 
-  local source = get_source()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+  last_bufnr, last_cursor_line, last_format = bufnr, cursor_line, format
+  M._render_source(bufnr, cursor_line, format)
+end
+
+-- Shared by :PlantumlPreview and the debounced auto-refresh below.
+function M._render_source(bufnr, cursor_line, format)
+  local source = get_source(bufnr, cursor_line)
   if not source then
     return
   end
 
-  local bufname = vim.api.nvim_buf_get_name(0)
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
   local cwd = bufname ~= '' and vim.fn.fnamemodify(bufname, ':h') or vim.fn.getcwd()
 
   vim.system(
-    { 'java', '-jar', jar_path, flag, '-pipe', '-charset', 'UTF-8' },
+    { 'java', '-jar', jar_path, FORMAT_FLAGS[format], '-pipe', '-charset', 'UTF-8' },
     { stdin = source, text = true, cwd = cwd },
     function(result)
       vim.schedule(function()
@@ -168,6 +194,27 @@ function M.preview(format)
         render(vim.split(result.stdout, '\n', { plain = true }))
       end)
     end
+  )
+end
+
+-- Debounces re-renders so edits to a plantuml/markdown buffer refresh an
+-- already-open preview automatically, without shelling out on every
+-- keystroke. Never opens the preview on its own.
+function M._schedule_refresh(bufnr, cursor_line)
+  if not (preview_win and vim.api.nvim_win_is_valid(preview_win)) then
+    return
+  end
+  if not jar_path then
+    return
+  end
+  last_bufnr, last_cursor_line = bufnr, cursor_line
+  debounce_timer:stop()
+  debounce_timer:start(
+    300,
+    0,
+    vim.schedule_wrap(function()
+      M._render_source(last_bufnr, last_cursor_line, last_format or 'txt')
+    end)
   )
 end
 
