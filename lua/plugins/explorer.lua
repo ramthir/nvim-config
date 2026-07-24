@@ -41,7 +41,7 @@ return {
         },
         filters = {
           dotfiles = false, -- show dotfiles
-          custom = { '.DS_Store', 'node_modules', '.git' },
+          custom = { '.DS_Store', 'node_modules', [[^\.git$]] },
         },
         git = { enable = true, ignore = false },
         filesystem_watchers = { enable = true },
