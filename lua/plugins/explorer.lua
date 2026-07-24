@@ -34,14 +34,18 @@ return {
         renderer = {
           group_empty = true,
           indent_markers = { enable = true },
+          highlight_opened_files = 'name',
           icons = {
             git_placement = 'before',
             show = { file = true, folder = true, folder_arrow = true, git = true },
           },
         },
+        update_focused_file = {
+          enable = true,
+        },
         filters = {
           dotfiles = false, -- show dotfiles
-          custom = { '.DS_Store', 'node_modules', [[^\.git$]] },
+          custom = { '.DS_Store', 'node_modules', [[^\.git$]], '__pycache__' },
         },
         git = { enable = true, ignore = false },
         filesystem_watchers = { enable = true },
