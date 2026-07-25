@@ -30,6 +30,10 @@ local function set_highlights()
   vim.api.nvim_set_hl(0, 'markdownCode', { fg = '#a9dc76', bg = '#403e41' })
   vim.api.nvim_set_hl(0, 'markdownCodeDelimiter', { fg = '#5b595c', bg = '#403e41' })
 
+  -- List markers (-, *, +, 1.) red (markdownOrderedListMarker links to
+  -- markdownListMarker, which otherwise links to htmlTagName)
+  vim.api.nvim_set_hl(0, 'markdownListMarker', { fg = '#ff6188' })
+
   -- Bold text yellow, ** delimiters gray
   vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
   vim.api.nvim_set_hl(0, '@markup.strong.delimiter.markdown_inline', { fg = '#5b595c' })
