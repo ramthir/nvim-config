@@ -38,6 +38,9 @@ local function set_highlights()
   -- core markdown.vim has no table support to hook a default link onto)
   vim.api.nvim_set_hl(0, 'markdownTableDelimiter', { fg = '#5b595c' })
 
+  -- Table header row text yellow, matching headings
+  vim.api.nvim_set_hl(0, 'markdownTableHeader', { fg = '#ffd866', bold = true })
+
   -- Bold text yellow, ** delimiters gray
   vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
   vim.api.nvim_set_hl(0, '@markup.strong.delimiter.markdown_inline', { fg = '#5b595c' })
