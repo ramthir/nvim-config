@@ -18,6 +18,18 @@ local function set_highlights()
   -- Table headers yellow
   vim.api.nvim_set_hl(0, '@markup.heading.markdown', { fg = '#ffd866', bold = true })
 
+  -- Markdown buffers use the legacy :syntax engine, not treesitter (see
+  -- plugins/treesitter.lua), so the @markup.* groups below don't apply to
+  -- them. markdownH1 already renders yellow via its default link to Title;
+  -- markdownBold links to htmlBold, which has no color, so set it to match.
+  vim.api.nvim_set_hl(0, 'markdownBold', { fg = '#ffd866', bold = true })
+  vim.api.nvim_set_hl(0, 'markdownBoldDelimiter', { fg = '#5b595c' })
+
+  -- Inline code green, backtick delimiters gray (markdownCode has no
+  -- default link, so it's unstyled otherwise)
+  vim.api.nvim_set_hl(0, 'markdownCode', { fg = '#a9dc76', bg = '#403e41' })
+  vim.api.nvim_set_hl(0, 'markdownCodeDelimiter', { fg = '#5b595c', bg = '#403e41' })
+
   -- Bold text yellow, ** delimiters gray
   vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
   vim.api.nvim_set_hl(0, '@markup.strong.delimiter.markdown_inline', { fg = '#5b595c' })
