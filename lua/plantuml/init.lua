@@ -169,11 +169,17 @@ function M.preview(format)
   local bufnr = vim.api.nvim_get_current_buf()
   local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
   last_bufnr, last_cursor_line, last_format = bufnr, cursor_line, format
-  M._render_source(bufnr, cursor_line, format)
+  M._render_source(bufnr, cursor_line, format, false)
 end
 
 -- Shared by :PlantumlPreview and the debounced auto-refresh below.
-function M._render_source(bufnr, cursor_line, format)
+--
+-- is_auto: true when called from the debounced auto-refresh, which fires on
+-- every few keystrokes and so routinely sees transient parse errors while a
+-- block is still open (e.g. an unclosed `{`). In that case keep showing the
+-- last successful render instead of blowing it away with an error screen;
+-- only a manual :PlantumlPreview replaces the preview with error details.
+function M._render_source(bufnr, cursor_line, format, is_auto)
   local source = get_source(bufnr, cursor_line)
   if not source then
     return
@@ -188,7 +194,11 @@ function M._render_source(bufnr, cursor_line, format)
     function(result)
       vim.schedule(function()
         if result.code ~= 0 then
-          render_error(result)
+          if is_auto then
+            vim.notify('plantuml.preview: ' .. error_headline(result.stderr) .. ' (keeping last preview)', vim.log.levels.WARN)
+          else
+            render_error(result)
+          end
           return
         end
         render(vim.split(result.stdout, '\n', { plain = true }))
@@ -213,7 +223,7 @@ function M._schedule_refresh(bufnr, cursor_line)
     300,
     0,
     vim.schedule_wrap(function()
-      M._render_source(last_bufnr, last_cursor_line, last_format or 'txt')
+      M._render_source(last_bufnr, last_cursor_line, last_format or 'txt', true)
     end)
   )
 end
