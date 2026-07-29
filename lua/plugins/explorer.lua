@@ -50,9 +50,9 @@ return {
         git = { enable = true, ignore = false },
         filesystem_watchers = {
           enable = true,
-          -- Ephemeral dirs (e.g. codex CLI sessions) get created/removed fast
+          -- Ephemeral dirs from AI/dev CLI sessions get created/removed fast
           -- enough that fs_event loses the race and logs ENOENT warnings.
-          ignore_dirs = { '%.codex$' },
+          ignore_dirs = { '%.codex$', '%.claude$', '%.copilot$', '%.agy$' },
         },
         actions = {
           open_file = {
