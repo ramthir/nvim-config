@@ -121,6 +121,12 @@ local function render(lines)
     -- double-line/shade chars used for note boxes) so text labels stand
     -- out and paths are easier to trace in busy diagrams.
     vim.cmd([[syntax match PlantumlPreviewConnector /[─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬░▒▓]/]])
+    -- utxt still falls back to plain ASCII for some connectors: sequence
+    -- arrowheads (only when touching a ─ line, to avoid text like "a < b"),
+    -- and bare "|" class-relation lines (only when the whole line is just
+    -- that pipe, to avoid text containing a literal "|").
+    vim.cmd([[syntax match PlantumlPreviewConnector /\(─\)\@<=>\|<\(─\)\@=/]])
+    vim.cmd([[syntax match PlantumlPreviewConnector /^\s*|\s*$/]])
   end)
 end
 
