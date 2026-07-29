@@ -125,20 +125,24 @@ local function replace_matches(line, regex, transform)
   return table.concat(out)
 end
 
+local BOX_DRAWING_CLASS = "[─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬]"
 local CONNECTOR_PIPE_RE = vim.regex([[\(^\|\s\)\@<=|\(\s\|$\)\@=]])
-local CONNECTOR_DASH_RE = vim.regex([[\(│\)\@<=-\{2,}\|-\{2,}\(│\)\@=]])
+local CONNECTOR_DASH_RE =
+  vim.regex([[\(]] .. BOX_DRAWING_CLASS .. [[\)\@<=-\{2,}\|-\{2,}\(]] .. BOX_DRAWING_CLASS .. [[\)\@=]])
 
 -- utxt's dedicated ascii-art renderer (sequence diagrams) draws proper
--- unicode box-drawing lines, but class-diagram relations go through a
--- separate layout step that only ever emits plain ASCII: a bare "|" between
--- boxes, and "--" runs bridging two box borders directly. Stacked ASCII "|"
+-- unicode box-drawing lines, but class- and component-diagram relations go
+-- through a separate layout step that only ever emits plain ASCII: a bare
+-- "|" between boxes, and "--" runs bridging two box borders directly (the
+-- border can be any box-drawing junction, e.g. "├───┤--├───┤" between two
+-- component boxes at the same row, not just a plain "│"). Stacked ASCII "|"
 -- rows leave visible gaps between them in most fonts, reading as a broken
 -- line; rewrite them to the real box-drawing glyphs so they join up.
 --
 -- Guarded the same way as the dimming used to be: the pipe only converts
 -- when whitespace-flanked (so a literal "|" inside a label is untouched),
--- and the dash run needs 2+ dashes touching an existing box border (so a
--- single "-visibility" marker right after a border, e.g.
+-- and the dash run needs 2+ dashes touching an existing box-drawing
+-- character (so a single "-visibility" marker right after a border, e.g.
 -- "│-secret: string│", isn't mistaken for a connector).
 local function harden_connectors(lines)
   for i, line in ipairs(lines) do
