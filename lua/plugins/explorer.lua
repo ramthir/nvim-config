@@ -48,7 +48,12 @@ return {
           custom = { '.DS_Store', 'node_modules', [[^\.git$]], '__pycache__' },
         },
         git = { enable = true, ignore = false },
-        filesystem_watchers = { enable = true },
+        filesystem_watchers = {
+          enable = true,
+          -- Ephemeral dirs (e.g. codex CLI sessions) get created/removed fast
+          -- enough that fs_event loses the race and logs ENOENT warnings.
+          ignore_dirs = { '%.codex$' },
+        },
         actions = {
           open_file = {
             quit_on_open = false,
