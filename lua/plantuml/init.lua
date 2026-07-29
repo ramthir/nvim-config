@@ -108,7 +108,58 @@ local function ensure_preview_win()
   vim.wo[preview_win].signcolumn = 'no'
 end
 
+-- Applies `regex` (a vim.regex) to every match in `line`, passing each
+-- matched substring through `transform` and splicing the result back in.
+local function replace_matches(line, regex, transform)
+  local out, pos = {}, 0
+  while pos < #line do
+    local s, e = regex:match_str(line:sub(pos + 1))
+    if not s then
+      table.insert(out, line:sub(pos + 1))
+      break
+    end
+    table.insert(out, line:sub(pos + 1, pos + s))
+    table.insert(out, transform(line:sub(pos + s + 1, pos + e)))
+    pos = pos + e
+  end
+  return table.concat(out)
+end
+
+local CONNECTOR_PIPE_RE = vim.regex([[\(^\|\s\)\@<=|\(\s\|$\)\@=]])
+local CONNECTOR_DASH_RE = vim.regex([[\(│\)\@<=-\{2,}\|-\{2,}\(│\)\@=]])
+
+-- utxt's dedicated ascii-art renderer (sequence diagrams) draws proper
+-- unicode box-drawing lines, but class-diagram relations go through a
+-- separate layout step that only ever emits plain ASCII: a bare "|" between
+-- boxes, and "--" runs bridging two box borders directly. Stacked ASCII "|"
+-- rows leave visible gaps between them in most fonts, reading as a broken
+-- line; rewrite them to the real box-drawing glyphs so they join up.
+--
+-- Guarded the same way as the dimming used to be: the pipe only converts
+-- when whitespace-flanked (so a literal "|" inside a label is untouched),
+-- and the dash run needs 2+ dashes touching an existing box border (so a
+-- single "-visibility" marker right after a border, e.g.
+-- "│-secret: string│", isn't mistaken for a connector).
+local function harden_connectors(lines)
+  for i, line in ipairs(lines) do
+    if line:find('|', 1, true) then
+      line = replace_matches(line, CONNECTOR_PIPE_RE, function()
+        return '│'
+      end)
+    end
+    if line:find('--', 1, true) then
+      line = replace_matches(line, CONNECTOR_DASH_RE, function(m)
+        return ('─'):rep(#m)
+      end)
+    end
+    lines[i] = line
+  end
+  return lines
+end
+
 local function render(lines)
+  lines = harden_connectors(lines)
+
   ensure_preview_buf()
   vim.bo[preview_buf].modifiable = true
   vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
@@ -117,19 +168,14 @@ local function render(lines)
 
   vim.api.nvim_buf_call(preview_buf, function()
     vim.cmd('syntax clear')
-    -- Dim box-drawing connector glyphs (utxt lines/joints, and the
-    -- double-line/shade chars used for note boxes) so text labels stand
-    -- out and paths are easier to trace in busy diagrams.
+    -- Dim box-drawing connector glyphs (utxt lines/joints, the
+    -- double-line/shade chars used for note boxes, and the ASCII
+    -- connectors harden_connectors() just rewrote into this same set) so
+    -- text labels stand out and paths are easier to trace in busy diagrams.
     vim.cmd([[syntax match PlantumlPreviewConnector /[─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬░▒▓]/]])
-    -- utxt still falls back to plain ASCII for some connectors: sequence
-    -- arrowheads (only when touching a ─ line, to avoid text like "a < b"),
-    -- bare "|" class-relation lines (only when whitespace-flanked, to avoid
-    -- a literal "|" inside a label), and "---" runs directly bridging two
-    -- box borders (2+ dashes required so a single "-visibility" marker
-    -- right after a border, e.g. "│-secret: string│", isn't caught).
+    -- Sequence-diagram arrowheads are still plain ASCII (only dim when
+    -- touching a ─ line, to avoid text like "a < b").
     vim.cmd([[syntax match PlantumlPreviewConnector /\(─\)\@<=>\|<\(─\)\@=/]])
-    vim.cmd([[syntax match PlantumlPreviewConnector /\(^\|\s\)\@<=|\(\s\|$\)\@=/]])
-    vim.cmd([[syntax match PlantumlPreviewConnector /\(│\)\@<=-\{2,}\|-\{2,}\(│\)\@=/]])
   end)
 end
 
