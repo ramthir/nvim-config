@@ -153,10 +153,10 @@ end
 
 local FORMAT_FLAGS = { txt = '-ttxt', utxt = '-tutxt' }
 
--- format: 'txt' (pure ASCII, safe over any SSH terminal) or 'utxt' (unicode
--- box-drawing, nicer but needs a UTF-8 capable terminal/font).
+-- format: 'utxt' (unicode box-drawing, default) or 'txt' (pure ASCII, safe
+-- over any SSH terminal without UTF-8 support).
 function M.preview(format)
-  format = format or 'txt'
+  format = format or 'utxt'
   if not FORMAT_FLAGS[format] then
     vim.notify('plantuml.preview: unknown format "' .. format .. '" (use txt or utxt)', vim.log.levels.ERROR)
     return
@@ -223,7 +223,7 @@ function M._schedule_refresh(bufnr, cursor_line)
     300,
     0,
     vim.schedule_wrap(function()
-      M._render_source(last_bufnr, last_cursor_line, last_format or 'txt', true)
+      M._render_source(last_bufnr, last_cursor_line, last_format or 'utxt', true)
     end)
   )
 end
