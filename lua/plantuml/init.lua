@@ -123,10 +123,13 @@ local function render(lines)
     vim.cmd([[syntax match PlantumlPreviewConnector /[─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬░▒▓]/]])
     -- utxt still falls back to plain ASCII for some connectors: sequence
     -- arrowheads (only when touching a ─ line, to avoid text like "a < b"),
-    -- and bare "|" class-relation lines (only when the whole line is just
-    -- that pipe, to avoid text containing a literal "|").
+    -- bare "|" class-relation lines (only when whitespace-flanked, to avoid
+    -- a literal "|" inside a label), and "---" runs directly bridging two
+    -- box borders (2+ dashes required so a single "-visibility" marker
+    -- right after a border, e.g. "│-secret: string│", isn't caught).
     vim.cmd([[syntax match PlantumlPreviewConnector /\(─\)\@<=>\|<\(─\)\@=/]])
-    vim.cmd([[syntax match PlantumlPreviewConnector /^\s*|\s*$/]])
+    vim.cmd([[syntax match PlantumlPreviewConnector /\(^\|\s\)\@<=|\(\s\|$\)\@=/]])
+    vim.cmd([[syntax match PlantumlPreviewConnector /\(│\)\@<=-\{2,}\|-\{2,}\(│\)\@=/]])
   end)
 end
 
