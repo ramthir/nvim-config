@@ -41,6 +41,10 @@ local function set_highlights()
   -- Table header row text yellow, matching headings
   vim.api.nvim_set_hl(0, 'markdownTableHeader', { fg = '#ffd866', bold = true })
 
+  -- PlantUML preview: dim box-drawing connector glyphs so labels stand out
+  -- (see lua/plantuml/init.lua, which applies this group to rendered utxt output)
+  vim.api.nvim_set_hl(0, 'PlantumlPreviewConnector', { fg = '#5b595c' })
+
   -- Bold text yellow, ** delimiters gray
   vim.api.nvim_set_hl(0, '@markup.strong.markdown_inline',           { fg = '#ffd866', bold = true })
   vim.api.nvim_set_hl(0, '@markup.strong.delimiter.markdown_inline', { fg = '#5b595c' })

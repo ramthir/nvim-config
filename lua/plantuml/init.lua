@@ -117,6 +117,10 @@ local function render(lines)
 
   vim.api.nvim_buf_call(preview_buf, function()
     vim.cmd('syntax clear')
+    -- Dim box-drawing connector glyphs (utxt lines/joints, and the
+    -- double-line/shade chars used for note boxes) so text labels stand
+    -- out and paths are easier to trace in busy diagrams.
+    vim.cmd([[syntax match PlantumlPreviewConnector /[─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬░▒▓]/]])
   end)
 end
 
