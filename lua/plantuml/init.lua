@@ -242,7 +242,18 @@ end
 -- block is still open (e.g. an unclosed `{`). In that case keep showing the
 -- last successful render instead of blowing it away with an error screen;
 -- only a manual :PlantumlPreview replaces the preview with error details.
+-- is_auto results race against the user closing the preview mid-flight (the
+-- debounce timer and the java process both take time); re-check the window
+-- right before acting so a closed preview doesn't get resurrected.
+local function auto_preview_closed()
+  return not (preview_win and vim.api.nvim_win_is_valid(preview_win))
+end
+
 function M._render_source(bufnr, cursor_line, format, is_auto)
+  if is_auto and auto_preview_closed() then
+    return
+  end
+
   local source = get_source(bufnr, cursor_line)
   if not source then
     return
@@ -256,6 +267,9 @@ function M._render_source(bufnr, cursor_line, format, is_auto)
     { stdin = source, text = true, cwd = cwd },
     function(result)
       vim.schedule(function()
+        if is_auto and auto_preview_closed() then
+          return
+        end
         if result.code ~= 0 then
           if is_auto then
             vim.notify('plantuml.preview: ' .. error_headline(result.stderr) .. ' (keeping last preview)', vim.log.levels.WARN)
