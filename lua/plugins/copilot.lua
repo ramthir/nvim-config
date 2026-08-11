@@ -30,6 +30,11 @@ return {
   {
     "zbirenbaum/copilot-cmp",
     dependencies = { "zbirenbaum/copilot.lua" },
+    -- `dependencies` only orders loading relative to copilot.lua; without an
+    -- explicit trigger of its own, lazy.nvim (defaults.lazy = true) never
+    -- loads this plugin at all, so copilot_cmp.setup() never runs and the
+    -- "copilot" cmp source (see completion.lua) never registers.
+    event = "InsertEnter",
     config = function()
       require("copilot_cmp").setup()
     end,
