@@ -6,21 +6,49 @@ local buffer    = require('notes.buffer')
 local pandora   = require('notes.pandora')
 local wikilinks = require('notes.wikilinks')
 
+local pending = {}
+
+local function mark_conflict(bufnr)
+  vim.b[bufnr].pandora_remote_conflict = true
+  vim.notify('Note changed on Pandora. Your unsaved edits are kept; use :edit! to reload or :write! to overwrite.',
+    vim.log.levels.WARN)
+end
+
 local function on_event(event)
+  -- Any newer event supersedes a pending reload, including our own saves/deletions.
+  pending[event.id] = nil
   if event.source_id == pandora.client_id then return end
 
   local bufnr = buffer.find(event.id)
 
   if event.type == 'note.updated' then
     wikilinks.invalidate(event.id)
-    if bufnr then
+    if bufnr and vim.api.nvim_buf_is_loaded(bufnr) then
       if vim.bo[bufnr].modified then
-        vim.b[bufnr].pandora_remote_conflict = true
-        vim.notify('Note changed on Pandora. Your unsaved edits are kept; use :edit! to reload or :write! to overwrite.',
-          vim.log.levels.WARN)
+        mark_conflict(bufnr)
       else
-        local note = pandora.get(event.id)
-        if note then buffer.reload(bufnr, note) end
+        local request = {}
+        pending[event.id] = request
+        local baseline = vim.b[bufnr].pandora_updated_at
+        local tick = vim.api.nvim_buf_get_changedtick(bufnr)
+        pandora.get_async(event.id, function(note, err)
+          if pending[event.id] ~= request then return end
+          pending[event.id] = nil
+          if not vim.api.nvim_buf_is_loaded(bufnr) or buffer.find(event.id) ~= bufnr then return end
+          -- A save or manual reload while fetching makes this response obsolete.
+          if vim.b[bufnr].pandora_updated_at ~= baseline then return end
+          if vim.bo[bufnr].modified then
+            mark_conflict(bufnr)
+            return
+          end
+          if vim.api.nvim_buf_get_changedtick(bufnr) ~= tick then return end
+          if not note then
+            vim.notify('Could not refresh note ' .. event.id .. ': ' .. (err or 'request failed'), vim.log.levels.WARN)
+            return
+          end
+          buffer.reload(bufnr, note)
+          wikilinks.refresh_all()
+        end)
       end
     end
     wikilinks.refresh_all()
@@ -78,6 +106,7 @@ end
 
 function M.stop()
   stopping = true
+  pending = {}
   if stream then
     pcall(function() stream:kill('sigterm') end)
     stream = nil
