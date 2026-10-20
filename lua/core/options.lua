@@ -24,7 +24,7 @@ opt.cursorline = true
 opt.scrolloff = 8
 opt.sidescrolloff = 8
 opt.wrap = false
-opt.colorcolumn = '120'
+opt.colorcolumn = ''
 opt.showmode = false
 
 -- Files
