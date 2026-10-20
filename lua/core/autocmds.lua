@@ -114,13 +114,17 @@ autocmd('TextYankPost', {
   end,
 })
 
--- Remove trailing whitespace on save, except a "Kr," sign-off line, which
--- needs a trailing two-space hard break to render on its own line in markdown
+-- Markdown whitespace can carry meaning (hard breaks and fenced code).
+-- Keep it intact, while retaining the Markdown "Kr," sign-off hard break.
 autocmd('BufWritePre', {
   group = general,
   callback = function()
     local pos = vim.fn.getpos('.')
-    vim.cmd([[%s/^Kr,\s*$\|\s\+$/\=submatch(0) =~ '^Kr,' ? 'Kr,  ' : ''/ge]])
+    if vim.bo.filetype == 'markdown' then
+      vim.cmd([[%s/^Kr,\s*$/Kr,  /e]])
+    else
+      vim.cmd([[%s/\s\+$//e]])
+    end
     vim.fn.setpos('.', pos)
   end,
 })
