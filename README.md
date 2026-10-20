@@ -10,6 +10,7 @@ Notes live in Pandora. Neovim reads and writes them through Pandora's local API.
 | Open a note, short | `:Note <id>`, or `:note <id>` in lower case |
 | Open the note whose number is under the cursor, or be asked for an ID | `:Note` with no ID, or `<leader>no` |
 | Save it to Pandora | `:write` |
+| Force save over a remote change | `:write!` |
 | Reload it from Pandora, discarding local edits | `:edit!` |
 | Create a note | `:NotesCreate` or `<leader>nn` |
 | Follow a `[[link]]` | `<CR>` on the link |
