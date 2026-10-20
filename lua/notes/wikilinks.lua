@@ -33,8 +33,11 @@ local function title_for(id)
   if titles[id] then return titles[id] end
   if misses[id] and vim.uv.now() - misses[id] < MISS_TTL_MS then return nil end
   if inflight[id] then return nil end
-  inflight[id] = true
+  local request = {}
+  inflight[id] = request
   require('notes.pandora').get_async(id, function(note)
+    -- set_title/invalidate may have superseded this request, even with a new lookup.
+    if inflight[id] ~= request then return end
     inflight[id] = nil
     if not note then
       misses[id] = vim.uv.now()
