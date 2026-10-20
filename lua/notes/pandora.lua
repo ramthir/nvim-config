@@ -31,7 +31,7 @@ end
 local function request(method, path, body)
   local base_url = require("notes").config.base_url
   local cmd = {
-    "curl", "-sS", "--max-time", "5", "-X", method,
+    "curl", "-sS", "--max-time", "10", "-X", method,
     "-H", "Content-Type: application/json",
     "-w", "\n%{http_code}",
   }

@@ -3,9 +3,11 @@ local M = {}
 local HL_GROUP = 'NotesWikiLink'
 local ns       = vim.api.nvim_create_namespace('NotesWikiLinks')
 
--- Titles looked up from Pandora, keyed by note ID. Only successful lookups are kept,
--- so a server that is down is retried on the next redraw.
+-- Titles looked up from Pandora, keyed by note ID. A failed lookup is remembered for
+-- a while, so a missing note or a server that is down is not retried on every redraw.
+local MISS_TTL_MS = 30000
 local titles = {}
+local misses = {}
 
 local function parse(inner)
   local target, label = inner:match('^(.-)|(.*)$')
@@ -13,12 +15,16 @@ local function parse(inner)
 end
 
 local function title_for(id)
-  if titles[id] == nil then
-    local note = require('notes.pandora').get(id)
-    if not note then return nil end
-    titles[id] = note.title
+  if titles[id] then return titles[id] end
+  if misses[id] and vim.uv.now() - misses[id] < MISS_TTL_MS then return nil end
+  local note = require('notes.pandora').get(id)
+  if not note then
+    misses[id] = vim.uv.now()
+    return nil
   end
-  return titles[id]
+  misses[id] = nil
+  titles[id] = note.title
+  return note.title
 end
 
 function M.set_title(id, title)

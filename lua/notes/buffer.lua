@@ -87,7 +87,7 @@ function M.follow()
     return M.open_id(tonumber(target))
   end
 
-  local matches, err = pandora.search(target, { limit = 20, title_only = true })
+  local matches, err = pandora.search(target, { limit = 200, title_only = true })
   if not matches then
     vim.notify('Pandora search failed: ' .. err, vim.log.levels.ERROR)
     return
