@@ -177,14 +177,16 @@ autocmd('FileType', {
 autocmd('FileType', {
   group = general,
   pattern = 'markdown',
-  callback = function()
+  callback = function(ev)
     vim.opt_local.wrap = true
     vim.opt_local.linebreak = true
     vim.opt_local.breakindent = true
     vim.opt_local.spell = true
     vim.opt_local.textwidth = 0
     vim.schedule(function()
-      vim.opt_local.formatoptions:remove({ 't', 'a', 'w' })
+      if vim.api.nvim_buf_is_valid(ev.buf) and vim.bo[ev.buf].filetype == 'markdown' then
+        vim.bo[ev.buf].formatoptions = vim.bo[ev.buf].formatoptions:gsub('[taw]', '')
+      end
     end)
   end,
 })
