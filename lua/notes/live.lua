@@ -14,6 +14,46 @@ local function mark_conflict(bufnr)
     vim.log.levels.WARN)
 end
 
+-- Reconciliation also checks modified buffers, but only flags actual remote changes.
+local function refresh_note(id, bufnr, reconcile)
+  local request = {}
+  pending[id] = request
+  local baseline = vim.b[bufnr].pandora_updated_at
+  local tick = vim.api.nvim_buf_get_changedtick(bufnr)
+  pandora.get_async(id, function(note, err)
+    if pending[id] ~= request then return end
+    pending[id] = nil
+    if not vim.api.nvim_buf_is_loaded(bufnr) or buffer.find(id) ~= bufnr then return end
+    -- A save or manual reload while fetching makes this response obsolete.
+    if vim.b[bufnr].pandora_updated_at ~= baseline then return end
+    if reconcile and note and note.updated_at == baseline then return end
+    if vim.bo[bufnr].modified then
+      if note or not reconcile then mark_conflict(bufnr) end
+      return
+    end
+    if vim.api.nvim_buf_get_changedtick(bufnr) ~= tick then return end
+    if not note then
+      vim.notify('Could not refresh note ' .. id .. ': ' .. (err or 'request failed'), vim.log.levels.WARN)
+      return
+    end
+    buffer.reload(bufnr, note)
+    wikilinks.refresh_all()
+  end)
+end
+
+local function reconcile_notes()
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) then
+      local id = tonumber(vim.api.nvim_buf_get_name(bufnr):match('^pandora://notes/(%d+)$'))
+      if id then
+        wikilinks.invalidate(id)
+        refresh_note(id, bufnr, true)
+      end
+    end
+  end
+  wikilinks.refresh_all()
+end
+
 local function on_event(event)
   -- Any newer event supersedes a pending reload, including our own saves/deletions.
   pending[event.id] = nil
@@ -27,28 +67,7 @@ local function on_event(event)
       if vim.bo[bufnr].modified then
         mark_conflict(bufnr)
       else
-        local request = {}
-        pending[event.id] = request
-        local baseline = vim.b[bufnr].pandora_updated_at
-        local tick = vim.api.nvim_buf_get_changedtick(bufnr)
-        pandora.get_async(event.id, function(note, err)
-          if pending[event.id] ~= request then return end
-          pending[event.id] = nil
-          if not vim.api.nvim_buf_is_loaded(bufnr) or buffer.find(event.id) ~= bufnr then return end
-          -- A save or manual reload while fetching makes this response obsolete.
-          if vim.b[bufnr].pandora_updated_at ~= baseline then return end
-          if vim.bo[bufnr].modified then
-            mark_conflict(bufnr)
-            return
-          end
-          if vim.api.nvim_buf_get_changedtick(bufnr) ~= tick then return end
-          if not note then
-            vim.notify('Could not refresh note ' .. event.id .. ': ' .. (err or 'request failed'), vim.log.levels.WARN)
-            return
-          end
-          buffer.reload(bufnr, note)
-          wikilinks.refresh_all()
-        end)
+        refresh_note(event.id, bufnr, false)
       end
     end
     wikilinks.refresh_all()
@@ -83,23 +102,39 @@ end
 
 local stream
 local stopping = false
+local connection
 
 local function start()
   if stopping then return end
   local base_url = require('notes').config.base_url
   local parse = parser()
+  local current = {}
+  connection = current
+  local reconciled = false
   stream = vim.system({ 'curl', '-sN', base_url .. '/api/events' }, {
     stdout = function(_, chunk)
       if not chunk then return end
-      for _, event in ipairs(parse(chunk)) do
-        vim.schedule(function() on_event(event) end)
-      end
+      local events = parse(chunk)
+      vim.schedule(function()
+        if stopping or connection ~= current then return end
+        -- The first stream data (including a heartbeat) confirms the connection.
+        if not reconciled then
+          reconciled = true
+          reconcile_notes()
+        end
+        for _, event in ipairs(events) do on_event(event) end
+      end)
     end,
   }, function()
     vim.schedule(function()
+      if connection ~= current then return end
+      connection = nil
+      pending = {}
       stream = nil
       if not stopping then
-        vim.defer_fn(start, RETRY_MS)
+        vim.defer_fn(function()
+          if not stopping and not connection then start() end
+        end, RETRY_MS)
       end
     end)
   end)
@@ -107,6 +142,7 @@ end
 
 function M.stop()
   stopping = true
+  connection = nil
   pending = {}
   if stream then
     pcall(function() stream:kill('sigterm') end)
