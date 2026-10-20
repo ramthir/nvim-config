@@ -57,6 +57,8 @@ end
 local function read(bufnr)
   vim.bo[bufnr].buftype  = 'acwrite'
   vim.bo[bufnr].swapfile = false
+  -- A failed reload must not leave a previous version usable for saving.
+  vim.b[bufnr].pandora_updated_at = nil
 
   local name = vim.api.nvim_buf_get_name(bufnr)
   local id   = note_id(name)
@@ -94,21 +96,23 @@ local function save(bufnr, force)
 
   local baseline = vim.b[bufnr].pandora_updated_at
   if not force then
+    if not baseline then
+      vim.notify('Note has not loaded successfully; use :edit! to reload before saving.', vim.log.levels.ERROR)
+      return
+    end
     if vim.b[bufnr].pandora_remote_conflict then
       vim.notify('Note changed on Pandora; use :edit! to reload or :write! to overwrite.', vim.log.levels.ERROR)
       return
     end
-    if baseline then
-      local remote, get_err = pandora.get(id)
-      if not remote then
-        vim.notify('Pandora save failed: ' .. get_err, vim.log.levels.ERROR)
-        return
-      end
-      if remote.updated_at ~= baseline then
-        vim.b[bufnr].pandora_remote_conflict = true
-        vim.notify('Note changed on Pandora; use :edit! to reload or :write! to overwrite.', vim.log.levels.ERROR)
-        return
-      end
+    local remote, get_err = pandora.get(id)
+    if not remote then
+      vim.notify('Pandora save failed: ' .. get_err, vim.log.levels.ERROR)
+      return
+    end
+    if remote.updated_at ~= baseline then
+      vim.b[bufnr].pandora_remote_conflict = true
+      vim.notify('Note changed on Pandora; use :edit! to reload or :write! to overwrite.', vim.log.levels.ERROR)
+      return
     end
   end
 

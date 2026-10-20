@@ -17,6 +17,7 @@ Notes live in Pandora. Neovim reads and writes them through Pandora's local API.
 
 - `<id>` is the note's number in Pandora. A `[[123]]` link shows the target's title, and the saved text keeps the ID.
 - An open note reloads by itself when it is changed elsewhere in Pandora. If you have unsaved edits, they are kept and you get a warning.
+- If opening or reloading a note fails, normal saves are blocked until `:edit!` successfully reloads it. `:write!` remains an explicit overwrite.
 - Copilot attaches to note buffers, so text from your notes is sent to GitHub Copilot as context.
 - There is no note search in Neovim.
 
