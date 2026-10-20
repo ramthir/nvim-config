@@ -15,7 +15,8 @@ local function on_event(event)
     wikilinks.invalidate(event.id)
     if bufnr then
       if vim.bo[bufnr].modified then
-        vim.notify('Note changed on Pandora. Your unsaved edits are kept; saving will overwrite the change.',
+        vim.b[bufnr].pandora_remote_conflict = true
+        vim.notify('Note changed on Pandora. Your unsaved edits are kept; use :edit! to reload or :write! to overwrite.',
           vim.log.levels.WARN)
       else
         local note = pandora.get(event.id)

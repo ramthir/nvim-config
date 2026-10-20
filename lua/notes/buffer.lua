@@ -29,6 +29,8 @@ function M.reload(bufnr, note)
   local cursor = win ~= -1 and vim.api.nvim_win_get_cursor(win) or nil
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
   vim.bo[bufnr].modified = false
+  vim.b[bufnr].pandora_updated_at = note.updated_at
+  vim.b[bufnr].pandora_remote_conflict = false
   wikilinks.set_title(note.id, note.title)
   wikilinks.refresh(bufnr)
   if cursor then
@@ -71,6 +73,8 @@ local function read(bufnr)
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
   vim.bo[bufnr].modified = false
+  vim.b[bufnr].pandora_updated_at = note.updated_at
+  vim.b[bufnr].pandora_remote_conflict = false
   vim.bo[bufnr].filetype = 'markdown'
   wikilinks.set_title(id, note.title)
   wikilinks.attach(bufnr)
@@ -81,12 +85,33 @@ local function read(bufnr)
   })
 end
 
-local function save(bufnr)
+local function save(bufnr, force)
   local id = note_id(vim.api.nvim_buf_get_name(bufnr))
   if not id then
     vim.notify('Not a Pandora note path; nothing saved.', vim.log.levels.ERROR)
     return
   end
+
+  local baseline = vim.b[bufnr].pandora_updated_at
+  if not force then
+    if vim.b[bufnr].pandora_remote_conflict then
+      vim.notify('Note changed on Pandora; use :edit! to reload or :write! to overwrite.', vim.log.levels.ERROR)
+      return
+    end
+    if baseline then
+      local remote, get_err = pandora.get(id)
+      if not remote then
+        vim.notify('Pandora save failed: ' .. get_err, vim.log.levels.ERROR)
+        return
+      end
+      if remote.updated_at ~= baseline then
+        vim.b[bufnr].pandora_remote_conflict = true
+        vim.notify('Note changed on Pandora; use :edit! to reload or :write! to overwrite.', vim.log.levels.ERROR)
+        return
+      end
+    end
+  end
+
   local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
   local fields  = { content = content, title = title_from(content) }
   local note, err = pandora.update(id, fields)
@@ -97,6 +122,8 @@ local function save(bufnr)
   if note.content ~= content then
     M.reload(bufnr, note)
   else
+    vim.b[bufnr].pandora_updated_at = note.updated_at
+    vim.b[bufnr].pandora_remote_conflict = false
     wikilinks.set_title(id, note.title)
     vim.bo[bufnr].modified = false
   end
@@ -117,7 +144,7 @@ function M.setup()
   vim.api.nvim_create_autocmd('BufWriteCmd', {
     group    = group,
     pattern  = PATTERN,
-    callback = function(ev) save(ev.buf) end,
+    callback = function(ev) save(ev.buf, vim.v.cmdbang == 1) end,
   })
 end
 
