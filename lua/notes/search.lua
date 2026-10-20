@@ -109,31 +109,35 @@ function M.search(config)
   }):find()
 end
 
--- Notes whose content matches what you type, searched by Pandora on each change.
+-- Notes whose title or content matches a query. The query is searched once, on
+-- submit, because Pandora embeds every content query; the results then filter locally.
 function M.grep(config)
   if not has_telescope() then return end
 
-  local pickers = require('telescope.pickers')
-  local finders = require('telescope.finders')
+  vim.ui.input({ prompt = 'Search notes: ' }, function(query)
+    if not query or vim.trim(query) == '' then return end
 
-  pickers.new({}, {
-    prompt_title  = 'Search Notes',
-    finder        = finders.new_dynamic({
-      fn = function(prompt)
-        if prompt == '' then return {} end
-        local notes, err = pandora.search(prompt, { limit = 100 })
-        if not notes then
-          vim.notify('Pandora search failed: ' .. err, vim.log.levels.ERROR)
-          return {}
-        end
-        return to_items(notes, false)
-      end,
-      entry_maker = entry_maker,
-    }),
-    sorter        = require('telescope.sorters').empty(),
-    previewer     = previewer(),
-    attach_mappings = open_selected,
-  }):find()
+    local notes, err = pandora.search(vim.trim(query), { limit = 100 })
+    if not notes then
+      vim.notify('Pandora search failed: ' .. err, vim.log.levels.ERROR)
+      return
+    end
+
+    local pickers = require('telescope.pickers')
+    local finders = require('telescope.finders')
+    local conf    = require('telescope.config').values
+
+    pickers.new({}, {
+      prompt_title    = 'Search Notes: ' .. query,
+      finder          = finders.new_table({
+        results     = to_items(notes, false),
+        entry_maker = entry_maker,
+      }),
+      sorter          = conf.generic_sorter({}),
+      previewer       = previewer(),
+      attach_mappings = open_selected,
+    }):find()
+  end)
 end
 
 return M

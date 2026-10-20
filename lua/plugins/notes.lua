@@ -27,7 +27,7 @@ return {
 
       vim.api.nvim_create_user_command('NotesGrep', function()
         require('notes').grep()
-      end, { desc = 'Search notes by content' })
+      end, { desc = 'Search notes by title or content' })
 
       vim.api.nvim_create_user_command('NotesCreate', function()
         require('notes').create()
