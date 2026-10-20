@@ -132,7 +132,13 @@ autocmd('BufWritePre', {
 -- Equalise splits on resize
 autocmd('VimResized', {
   group = general,
-  command = 'tabdo wincmd =',
+  callback = function()
+    local tab = vim.api.nvim_get_current_tabpage()
+    vim.cmd('tabdo wincmd =')
+    if vim.api.nvim_tabpage_is_valid(tab) then
+      vim.api.nvim_set_current_tabpage(tab)
+    end
+  end,
 })
 
 -- Auto-reload files changed outside Neovim
