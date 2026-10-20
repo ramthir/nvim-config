@@ -80,19 +80,19 @@ local function is_upcoming_meeting(tags_set)
   return true
 end
 
-local function is_current_month_note(tags_set, title, filename)
+local function is_current_month_note(tags_set, title)
   if not tags_set["month"] then return false end
   local now = os.date("*t")
   local exact = MONTH_NAMES[now.month] .. ", " .. tostring(now.year)
-  local haystack = (title .. " " .. filename):lower()
+  local haystack = title:lower()
   return haystack:find(exact, 1, true) ~= nil
 end
 
-local function get_priority(tags, title, filename)
+local function get_priority(tags, title)
   local tags_set = {}
   for _, t in ipairs(tags) do tags_set[t] = true end
 
-  if is_current_month_note(tags_set, title, filename) then return 0 end
+  if is_current_month_note(tags_set, title) then return 0 end
 
   local now = os.date("*t")
   local today = WEEKDAYS[now.wday]
@@ -131,21 +131,16 @@ local function get_priority(tags, title, filename)
   return 5
 end
 
-function M.read_tags(path)
-  local f = io.open(path, "r")
-  if not f then return {} end
-  local content = f:read("*a")
-  f:close()
-  return extract_tags(content)
-end
+M.tags = extract_tags
 
 function M.sort(entries)
   for _, entry in ipairs(entries) do
-    entry.priority = get_priority(entry.tags, entry.title, entry.filename)
+    entry.priority = get_priority(entry.tags, entry.title)
   end
   table.sort(entries, function(a, b)
     if a.priority ~= b.priority then return a.priority < b.priority end
-    if a.mtime ~= b.mtime then return a.mtime > b.mtime end
+    -- updated_at is an ISO timestamp, so string order is time order
+    if a.updated_at ~= b.updated_at then return a.updated_at > b.updated_at end
     return a.title:lower() < b.title:lower()
   end)
   return entries

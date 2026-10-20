@@ -1,37 +1,27 @@
 local M = {}
 
-local function title_to_filename(title)
-  return title
-    :gsub('[<>:"/\\|?*]', " ")
-    :gsub("%s+", " ")
-    :gsub("^%s+", "")
-    :gsub("[%. ]+$", "")
-end
-
-local function available_path(dir, base)
-  local path = dir .. "/" .. base .. ".md"
-  if vim.fn.filereadable(path) == 0 then return path end
-  local i = 2
-  repeat
-    path = string.format("%s/%s (%d).md", dir, base, i)
-    i = i + 1
-  until vim.fn.filereadable(path) == 0
-  return path
-end
-
-function M.create(config)
-  vim.ui.input({ prompt = "Note title: " }, function(title)
-    if not title or title:match("^%s*$") then return end
-    title = title:match("^%s*(.-)%s*$")
-    local base = title_to_filename(title)
-    if base == "" then base = "Untitled" end
-    local path = available_path(config.notes_path, base)
-    local file = io.open(path, "w")
-    if file then
-      file:write(config.template(title))
-      file:close()
+-- Asks for a node type, creates the note in Pandora, and opens it.
+function M.create_titled(title)
+  vim.ui.select(require('notes.pandora').NODE_TYPES, { prompt = 'Note type: ' }, function(node_type)
+    if not node_type then return end
+    local template = require('notes').config.template
+    local note, err = require('notes.pandora').create({
+      title     = title,
+      content   = template(title),
+      node_type = node_type,
+    })
+    if not note then
+      vim.notify('Pandora create failed: ' .. err, vim.log.levels.ERROR)
+      return
     end
-    vim.cmd("edit " .. vim.fn.fnameescape(path))
+    require('notes.buffer').open(note)
+  end)
+end
+
+function M.create()
+  vim.ui.input({ prompt = 'Note title: ' }, function(title)
+    if not title or title:match('^%s*$') then return end
+    M.create_titled(vim.trim(title))
   end)
 end
 

@@ -1,101 +1,143 @@
 local M = {}
 
-local function extract_title(path)
-  local f = io.open(path, "r")
-  if not f then return nil end
-  for line in f:lines() do
-    local title = line:match("^#%s+(.-)%s*$")
-    if title then
-      f:close()
-      return title
-    end
-  end
-  f:close()
-  return nil
+local pandora = require('notes.pandora')
+
+local function tag_text(tags)
+  return table.concat(vim.tbl_map(function(t) return '#' .. t end, tags), ' ')
 end
 
-local function build_entries(notes_path)
-  local sorter = require("notes.sort")
-  local icons  = require("notes.icons")
-  local paths  = vim.fn.globpath(notes_path, "**/*.md", false, true)
-  local entries = {}
-  for _, path in ipairs(paths) do
-    local filename = vim.fn.fnamemodify(path, ":t:r")
-    local tags          = sorter.read_tags(path)
-    local icon, icon_hl = icons.get(tags)
-    entries[#entries + 1] = {
-      path     = path,
-      title    = extract_title(path) or filename,
-      filename = filename,
-      mtime    = vim.fn.getftime(path),
-      tags     = tags,
-      icon     = icon,
-      icon_hl  = icon_hl,
+-- Builds picker items from Pandora notes. Sorted for the full list; the server's
+-- order is kept for content search.
+local function to_items(notes, sorted)
+  local sorter = require('notes.sort')
+  local icons  = require('notes.icons')
+  local items  = {}
+  for _, note in ipairs(notes) do
+    local tags          = sorter.tags(note.content)
+    local icon, icon_hl = icons.get(tags, note.node_type)
+    items[#items + 1] = {
+      note       = note,
+      title      = note.title,
+      tags       = tags,
+      icon       = icon,
+      icon_hl    = icon_hl,
+      updated_at = note.updated_at or '',
     }
   end
-  return sorter.sort(entries)
+  if sorted then return sorter.sort(items) end
+  return items
 end
 
-function M.search(config)
-  local ok, telescope = pcall(require, "telescope")
+local displayer
+
+local function entry_maker(item)
+  displayer = displayer or require('telescope.pickers.entry_display').create({
+    separator = ' ',
+    items = { { width = 2 }, { remaining = true }, { remaining = true } },
+  })
+  return {
+    value    = item.note,
+    display  = function(entry)
+      return displayer({
+        { entry.icon, entry.icon_hl },
+        entry.title,
+        { #entry.tags > 0 and tag_text(entry.tags) or '', 'TelescopeResultsComment' },
+      })
+    end,
+    ordinal  = item.title .. ' ' .. tag_text(item.tags),
+    title    = item.title,
+    tags     = item.tags,
+    icon     = item.icon,
+    icon_hl  = item.icon_hl,
+  }
+end
+
+local function previewer()
+  return require('telescope.previewers').new_buffer_previewer({
+    title = 'Note',
+    define_preview = function(self, entry)
+      vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, vim.split(entry.value.content, '\n', { plain = true }))
+      vim.bo[self.state.bufnr].filetype = 'markdown'
+    end,
+  })
+end
+
+local function open_selected(prompt_bufnr)
+  local actions      = require('telescope.actions')
+  local action_state = require('telescope.actions.state')
+  actions.select_default:replace(function()
+    local selection = action_state.get_selected_entry()
+    actions.close(prompt_bufnr)
+    if selection then
+      require('notes.buffer').open(selection.value)
+    end
+  end)
+  return true
+end
+
+local function has_telescope()
+  local ok = pcall(require, 'telescope')
   if not ok then
-    vim.notify("notes.nvim: telescope.nvim is required", vim.log.levels.ERROR)
+    vim.notify('notes.nvim: telescope.nvim is required', vim.log.levels.ERROR)
+  end
+  return ok
+end
+
+-- Every note, filtered by title and tags as you type.
+function M.search(config)
+  if not has_telescope() then return end
+
+  local notes, err = pandora.list_all()
+  if not notes then
+    vim.notify('Pandora list failed: ' .. err, vim.log.levels.ERROR)
     return
   end
 
-  local pickers      = require("telescope.pickers")
-  local finders      = require("telescope.finders")
-  local conf         = require("telescope.config").values
-  local displayer = require("telescope.pickers.entry_display").create({
-    separator = " ",
-    items = { { width = 2 }, { remaining = true }, { remaining = true } },
-  })
-
-  local function make_display(entry)
-    local tags = #entry.tags > 0
-      and table.concat(vim.tbl_map(function(t) return '#' .. t end, entry.tags), ' ')
-      or ''
-    return displayer({
-      { entry.icon, entry.icon_hl },
-      entry.title,
-      { tags, 'TelescopeResultsComment' },
-    })
-  end
+  local pickers = require('telescope.pickers')
+  local finders = require('telescope.finders')
+  local conf    = require('telescope.config').values
 
   pickers.new({}, {
-    prompt_title = "Notes",
-    finder = finders.new_table({
-      results = build_entries(config.notes_path),
-      entry_maker = function(entry)
-        return {
-          value    = entry.path,
-          display  = make_display,
-          ordinal  = entry.title .. ' ' .. table.concat(vim.tbl_map(function(t) return '#' .. t end, entry.tags), ' '),
-          path     = entry.path,
-          title    = entry.title,
-          filename = entry.filename,
-          tags     = entry.tags,
-          icon     = entry.icon,
-          icon_hl  = entry.icon_hl,
-        }
-      end,
+    prompt_title  = 'Notes',
+    finder        = finders.new_table({
+      results     = to_items(notes, true),
+      entry_maker = entry_maker,
     }),
-    sorter    = conf.generic_sorter({}),
-    previewer = conf.file_previewer({}),
+    sorter        = conf.generic_sorter({}),
+    previewer     = previewer(),
+    attach_mappings = open_selected,
   }):find()
 end
 
+-- Notes whose title or content matches a query. The query is searched once, on
+-- submit, because Pandora embeds every content query; the results then filter locally.
 function M.grep(config)
-  local ok, builtin = pcall(require, "telescope.builtin")
-  if not ok then
-    vim.notify("notes.nvim: telescope.nvim is required", vim.log.levels.ERROR)
-    return
-  end
-  builtin.live_grep({
-    prompt_title = "Search Notes",
-    cwd          = config.notes_path,
-    glob_pattern = "*.md",
-  })
+  if not has_telescope() then return end
+
+  vim.ui.input({ prompt = 'Search notes: ' }, function(query)
+    if not query or vim.trim(query) == '' then return end
+
+    local notes, err = pandora.search(vim.trim(query), { limit = 100 })
+    if not notes then
+      vim.notify('Pandora search failed: ' .. err, vim.log.levels.ERROR)
+      return
+    end
+
+    local pickers = require('telescope.pickers')
+    local finders = require('telescope.finders')
+    local conf    = require('telescope.config').values
+
+    pickers.new({}, {
+      prompt_title    = 'Search Notes: ' .. query,
+      finder          = finders.new_table({
+        results     = to_items(notes, false),
+        entry_maker = entry_maker,
+      }),
+      sorter          = conf.generic_sorter({}),
+      previewer       = previewer(),
+      attach_mappings = open_selected,
+    }):find()
+  end)
 end
 
 return M

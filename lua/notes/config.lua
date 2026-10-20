@@ -1,7 +1,7 @@
 local M = {}
 
 M.defaults = {
-  notes_path = "~/Workspace/notes",
+  base_url = "http://localhost",
   template = function(title)
     return string.format("# %s\n\n---\n\n#Note\n", title)
   end,

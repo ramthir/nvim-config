@@ -5,7 +5,6 @@ M.config = vim.tbl_deep_extend("force", {}, defaults)
 
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", defaults, opts or {})
-  M.config.notes_path = vim.fn.expand(M.config.notes_path)
 end
 
 function M.search()
