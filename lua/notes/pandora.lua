@@ -21,7 +21,7 @@ end
 
 local function query_string(params)
   local parts = {}
-  for _, key in ipairs({ "query", "limit", "offset", "node_type", "title_only" }) do
+  for _, key in ipairs({ "query", "limit", "title_only" }) do
     local value = params[key]
     if value ~= nil then
       parts[#parts + 1] = key .. "=" .. encode(value)

@@ -10,7 +10,7 @@ function M.setup(opts)
 end
 
 function M.create()
-  require("notes.create").create(M.config)
+  require("notes.create").create()
 end
 
 return M
