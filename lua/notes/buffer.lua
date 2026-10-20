@@ -115,6 +115,31 @@ function M.open_id(id)
   vim.cmd.edit(buffer_name(id))
 end
 
+-- :Note <id> opens that note. With no ID it opens the number under the cursor, or asks
+-- for one. Only digits are accepted, as for the full path.
+function M.open_from(arg)
+  local function open(text)
+    text = vim.trim(text or '')
+    if text == '' then return end
+    if not text:match('^%d+$') then
+      vim.notify('Note ID must be a number: ' .. text, vim.log.levels.ERROR)
+      return
+    end
+    M.open_id(tonumber(text))
+  end
+
+  if vim.trim(arg or '') ~= '' then
+    return open(arg)
+  end
+
+  -- expand() raises an error when there is no word under the cursor, for example on an empty line
+  local found, word = pcall(vim.fn.expand, '<cword>')
+  if found and word:match('^%d+$') then
+    return open(word)
+  end
+  vim.ui.input({ prompt = 'Note ID: ' }, open)
+end
+
 function M.follow()
   local target = wikilinks.link_under_cursor()
   if not target then
