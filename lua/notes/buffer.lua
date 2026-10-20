@@ -14,6 +14,21 @@ local function find_buffer(id)
   end
 end
 
+M.find = find_buffer
+
+-- Replaces a buffer's lines with a note's content, keeping the cursor where it was.
+function M.reload(bufnr, note)
+  local win    = vim.fn.bufwinid(bufnr)
+  local cursor = win ~= -1 and vim.api.nvim_win_get_cursor(win) or nil
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
+  vim.bo[bufnr].modified = false
+  wikilinks.set_title(note.id, note.title)
+  if cursor then
+    local row = math.min(cursor[1], vim.api.nvim_buf_line_count(bufnr))
+    pcall(vim.api.nvim_win_set_cursor, win, { row, cursor[2] })
+  end
+end
+
 -- The first Markdown heading is the title, as Pandora keeps them equal.
 local function title_from(content)
   for line in content:gmatch('[^\n]*') do

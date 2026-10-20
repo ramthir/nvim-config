@@ -9,6 +9,10 @@ M.NODE_TYPES = {
 
 local PAGE_SIZE = 200
 
+-- Sent with every request. Pandora copies it onto the events it publishes for a save,
+-- so this Neovim can tell its own saves apart from changes made elsewhere.
+M.client_id = 'nvim-' .. vim.fn.getpid()
+
 local function encode(value)
   return (tostring(value):gsub("[^%w%-_%.~]", function(c)
     return string.format("%%%02X", c:byte())
@@ -33,6 +37,7 @@ local function request(method, path, body)
   local cmd = {
     "curl", "-sS", "--max-time", "10", "-X", method,
     "-H", "Content-Type: application/json",
+    "-H", "X-Client-Id: " .. M.client_id,
     "-w", "\n%{http_code}",
   }
   local opts = { text = true }
