@@ -71,6 +71,13 @@ autocmd('FocusLost', {
 })
 
 -- Auto-save on leaving insert mode, losing focus, or normal-mode text change
+autocmd('BufWritePost', {
+  group = general,
+  callback = function(ev)
+    vim.b[ev.buf].autosave_failure_notified = nil
+  end,
+})
+
 autocmd({ 'InsertLeave', 'FocusLost', 'TextChanged' }, {
   group = general,
   callback = function()
@@ -79,7 +86,14 @@ autocmd({ 'InsertLeave', 'FocusLost', 'TextChanged' }, {
       and vim.bo[buf].buftype == ''
       and vim.api.nvim_buf_get_name(buf) ~= ''
     then
-      vim.cmd('silent! write')
+      local ok, err = pcall(vim.cmd, 'silent write')
+      if ok then
+        vim.b[buf].autosave_failure_notified = nil
+      elseif not vim.b[buf].autosave_failure_notified then
+        vim.b[buf].autosave_failure_notified = true
+        vim.notify('Autosave failed for ' .. vim.api.nvim_buf_get_name(buf) .. ': ' .. tostring(err),
+          vim.log.levels.ERROR)
+      end
     end
   end,
 })
