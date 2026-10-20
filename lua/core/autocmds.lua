@@ -176,9 +176,9 @@ autocmd('FileType', {
     vim.opt_local.linebreak = true
     vim.opt_local.breakindent = true
     vim.opt_local.spell = true
-    vim.opt_local.textwidth = 120
+    vim.opt_local.textwidth = 0
     vim.schedule(function()
-      vim.opt_local.formatoptions:append('aw')
+      vim.opt_local.formatoptions:remove({ 't', 'a', 'w' })
     end)
   end,
 })
