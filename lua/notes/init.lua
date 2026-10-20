@@ -5,15 +5,8 @@ M.config = vim.tbl_deep_extend("force", {}, defaults)
 
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", defaults, opts or {})
+  require("notes.buffer").setup()
   require("notes.live").start()
-end
-
-function M.search()
-  require("notes.search").search(M.config)
-end
-
-function M.grep()
-  require("notes.search").grep(M.config)
 end
 
 function M.create()
