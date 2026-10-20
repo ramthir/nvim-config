@@ -66,7 +66,8 @@ end
 local function parser()
   local pending = ''
   return function(chunk)
-    pending = pending .. chunk
+    -- Normalize after combining chunks so a split CRLF pair stays intact.
+    pending = (pending .. chunk):gsub('\r\n', '\n')
     local events = {}
     while true do
       local block, rest = pending:match('^(.-)\n\n(.*)$')
