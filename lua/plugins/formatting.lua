@@ -23,7 +23,6 @@ return {
         scss            = { 'prettier' },
         json            = { 'prettier' },
         yaml            = { 'prettier' },
-        markdown        = { 'prettier' },
       },
       format_after_save = function(bufnr)
         local prettier_configs = {
