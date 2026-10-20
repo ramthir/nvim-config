@@ -19,13 +19,11 @@ return {
       vim.api.nvim_set_hl(0, 'NotesIconIdea',     { fg = '#e5c07b', default = true })
       vim.api.nvim_set_hl(0, 'NotesIconDefault',  { fg = '#e5c07b', default = true })
 
-      local config = { notes_path = vim.fn.expand('~/Workspace/notes') }
-      require('notes').setup(config)
-      require('notes.wikilinks').setup(config)
+      require('notes').setup()
 
       vim.api.nvim_create_user_command('NotesSearch', function()
         require('notes').search()
-      end, { desc = 'Search notes by filename' })
+      end, { desc = 'Search notes by title' })
 
       vim.api.nvim_create_user_command('NotesGrep', function()
         require('notes').grep()

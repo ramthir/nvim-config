@@ -39,13 +39,32 @@ local RULES = {
 
 local DEFAULT = { icon = "󰈙", hl = "NotesIconDefault" }
 
-function M.get(tags)
+-- Used when no tag rule matches, so Pandora notes without tags still get an icon.
+local NODE_TYPE_ICONS = {
+  task            = { icon = "󰄱", hl = "NotesIconTodo" },
+  meeting         = { icon = "󰙅", hl = "NotesIconMeeting" },
+  meeting_minutes = { icon = "󰙅", hl = "NotesIconMeeting" },
+  project         = { icon = "󰉋", hl = "NotesIconProject" },
+  specification   = { icon = "󰂺", hl = "NotesIconDefault" },
+  contact         = { icon = "󰀄", hl = "NotesIconContact" },
+  company         = { icon = "󱒋", hl = "NotesIconWork" },
+  team            = { icon = "󰉻", hl = "NotesIconWork" },
+  week            = { icon = "󰄰", hl = "NotesIconCalendar" },
+  month           = { icon = "󰃭", hl = "NotesIconCalendar" },
+  year            = { icon = "󰃭", hl = "NotesIconCalendar" },
+}
+
+function M.get(tags, node_type)
   local tags_set = {}
   for _, t in ipairs(tags) do tags_set[t] = true end
   for _, rule in ipairs(RULES) do
     if rule.match(tags_set, tags) then
       return rule.icon, rule.hl
     end
+  end
+  local by_type = NODE_TYPE_ICONS[node_type]
+  if by_type then
+    return by_type.icon, by_type.hl
   end
   return DEFAULT.icon, DEFAULT.hl
 end
