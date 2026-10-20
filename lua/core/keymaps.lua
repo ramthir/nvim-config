@@ -70,4 +70,5 @@ map('t', 'jk', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- Notes
 map('n', '<leader>nn', '<cmd>NotesCreate<CR>', { desc = 'New note' })
+map('n', '<leader>no', '<cmd>Note<CR>',         { desc = 'Open note by ID' })
 
