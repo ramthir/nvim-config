@@ -25,13 +25,15 @@ return {
         yaml            = { 'prettier' },
       },
       format_after_save = function(bufnr)
-        local prettier_configs = {
-          '.prettierrc', '.prettierrc.json', '.prettierrc.js',
-          '.prettierrc.cjs', '.prettierrc.ts', '.prettierrc.yaml',
-          '.prettierrc.yml', '.prettierrc.toml',
-          'prettier.config.js', 'prettier.config.cjs', 'prettier.config.ts',
-        }
-        if not vim.fs.root(bufnr, prettier_configs) then return end
+        local filename = vim.api.nvim_buf_get_name(bufnr)
+        if filename == '' then return end
+        -- Reuse Conform's supported config names and package.json key detection.
+        local prettier = require('conform.formatters.prettier')
+        if not prettier.cwd(prettier, {
+          buf = bufnr,
+          filename = filename,
+          dirname = vim.fs.dirname(filename),
+        }) then return end
         return {}
       end,
     },
