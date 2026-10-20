@@ -78,19 +78,6 @@ function M.search(query, opts)
   }))
 end
 
--- Every note, paged through the API.
-function M.list_all()
-  local notes = {}
-  local offset = 0
-  repeat
-    local page, err = request("GET", query_string({ limit = PAGE_SIZE, offset = offset }))
-    if not page then return nil, err end
-    vim.list_extend(notes, page)
-    offset = offset + PAGE_SIZE
-  until #page < PAGE_SIZE
-  return notes
-end
-
 function M.get(id)
   return request("GET", "/" .. id)
 end

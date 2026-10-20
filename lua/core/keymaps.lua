@@ -69,7 +69,5 @@ map('t', '<C-\\><C-n>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 map('t', 'jk', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- Notes
-map('n', '<leader>n',  '<cmd>NotesSearch<CR>', { desc = 'Find notes' })
-map('n', '<leader>ng', '<cmd>NotesGrep<CR>',   { desc = 'Grep notes' })
 map('n', '<leader>nn', '<cmd>NotesCreate<CR>', { desc = 'New note' })
 

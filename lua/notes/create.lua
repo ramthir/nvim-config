@@ -14,7 +14,7 @@ function M.create_titled(title)
       vim.notify('Pandora create failed: ' .. err, vim.log.levels.ERROR)
       return
     end
-    require('notes.buffer').open(note)
+    require('notes.buffer').open_id(note.id)
   end)
 end
 

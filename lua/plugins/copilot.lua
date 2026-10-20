@@ -18,6 +18,14 @@ return {
           },
         },
         panel = { enabled = false },
+        -- Pandora notes are acwrite buffers so :write saves to Pandora, and the default
+        -- rule only attaches to buffers with an empty buftype.
+        should_attach = function(bufnr, bufname)
+          if bufname:match('^pandora://notes/') then
+            return vim.bo[bufnr].buflisted
+          end
+          return require('copilot.config.should_attach').default(bufnr, bufname)
+        end,
         filetypes = {
           markdown = true,
           gitcommit = false,

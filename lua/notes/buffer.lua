@@ -3,8 +3,15 @@ local M = {}
 local pandora   = require('notes.pandora')
 local wikilinks = require('notes.wikilinks')
 
+local PATTERN = 'pandora://notes/*'
+
 local function buffer_name(id)
-  return 'pandora://note/' .. id
+  return 'pandora://notes/' .. id
+end
+
+-- Only digits are accepted, so nothing else from a typed path reaches a request.
+local function note_id(name)
+  return tonumber(name:match('^pandora://notes/(%d+)$'))
 end
 
 local function find_buffer(id)
@@ -37,8 +44,44 @@ local function title_from(content)
   end
 end
 
+-- :edit pandora://notes/123 and :edit! land here. The buffer is set up for saving
+-- first, so a note that fails to load is never written to a file by mistake.
+local function read(bufnr)
+  vim.bo[bufnr].buftype  = 'acwrite'
+  vim.bo[bufnr].swapfile = false
+
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  local id   = note_id(name)
+  if not id then
+    vim.notify('Not a Pandora note path: ' .. name .. ' (use pandora://notes/<id>)', vim.log.levels.ERROR)
+    return
+  end
+
+  local note, err = pandora.get(id)
+  if not note then
+    vim.notify('Could not open note ' .. id .. ': ' .. err, vim.log.levels.ERROR)
+    return
+  end
+
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
+  vim.bo[bufnr].modified = false
+  vim.b[bufnr].pandora_note_id = id
+  vim.bo[bufnr].filetype = 'markdown'
+  wikilinks.set_title(id, note.title)
+  wikilinks.attach(bufnr)
+
+  vim.keymap.set('n', '<CR>', function() M.follow() end, {
+    buffer = bufnr,
+    desc   = 'Follow wiki link',
+  })
+end
+
 local function save(bufnr)
-  local id      = vim.b[bufnr].pandora_note_id
+  local id = note_id(vim.api.nvim_buf_get_name(bufnr))
+  if not id then
+    vim.notify('Not a Pandora note path; nothing saved.', vim.log.levels.ERROR)
+    return
+  end
   local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
   local fields  = { content = content, title = title_from(content) }
   local note, err = pandora.update(id, fields)
@@ -51,44 +94,25 @@ local function save(bufnr)
   vim.notify('Saved "' .. note.title .. '" to Pandora')
 end
 
-local function attach(bufnr)
-  wikilinks.attach(bufnr)
+-- Makes pandora://notes/<id> a path Neovim can read and write.
+function M.setup()
+  local group = vim.api.nvim_create_augroup('NotesBuffers', { clear = true })
+
+  vim.api.nvim_create_autocmd('BufReadCmd', {
+    group    = group,
+    pattern  = PATTERN,
+    callback = function(ev) read(ev.buf) end,
+  })
 
   vim.api.nvim_create_autocmd('BufWriteCmd', {
-    buffer   = bufnr,
-    callback = function() save(bufnr) end,
+    group    = group,
+    pattern  = PATTERN,
+    callback = function(ev) save(ev.buf) end,
   })
-
-  vim.keymap.set('n', '<CR>', function() M.follow() end, {
-    buffer = bufnr,
-    desc   = 'Follow wiki link',
-  })
-end
-
--- Opens a note in its own buffer, or switches to the buffer already open for it.
-function M.open(note)
-  local bufnr = find_buffer(note.id)
-  if not bufnr then
-    bufnr = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_buf_set_name(bufnr, buffer_name(note.id))
-    vim.bo[bufnr].buftype   = 'acwrite'
-    vim.bo[bufnr].swapfile  = false
-    vim.bo[bufnr].filetype  = 'markdown'
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
-    vim.bo[bufnr].modified  = false
-    vim.b[bufnr].pandora_note_id = note.id
-    attach(bufnr)
-  end
-  vim.api.nvim_set_current_buf(bufnr)
 end
 
 function M.open_id(id)
-  local note, err = pandora.get(id)
-  if not note then
-    vim.notify('Could not open note ' .. id .. ': ' .. err, vim.log.levels.ERROR)
-    return
-  end
-  M.open(note)
+  vim.cmd.edit(buffer_name(id))
 end
 
 function M.follow()
@@ -109,7 +133,7 @@ function M.follow()
   end
   for _, note in ipairs(matches) do
     if note.title:lower() == target:lower() then
-      return M.open(note)
+      return M.open_id(note.id)
     end
   end
 
