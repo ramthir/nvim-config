@@ -3,32 +3,72 @@ local M = {}
 local HL_GROUP = 'NotesWikiLink'
 local ns       = vim.api.nvim_create_namespace('NotesWikiLinks')
 
--- Titles looked up from Pandora, keyed by note ID. A failed lookup is remembered for
--- a while, so a missing note or a server that is down is not retried on every redraw.
+-- Titles looked up from Pandora, keyed by note ID. Uncached titles are fetched in the
+-- background so redraws and edits never block on network calls. A failed lookup is
+-- remembered for a while, so a missing note or a server that is down is not retried
+-- on every redraw.
 local MISS_TTL_MS = 30000
-local titles = {}
-local misses = {}
+local titles   = {}
+local misses   = {}
+local inflight = {}
 
 local function parse(inner)
   local target, label = inner:match('^(.-)|(.*)$')
   return target or inner, label
 end
 
+local apply_highlights
+
+local function note_buffers()
+  local bufs = {}
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) and vim.api.nvim_buf_get_name(bufnr):match('^pandora://notes/%d+$') then
+      bufs[#bufs + 1] = bufnr
+    end
+  end
+  return bufs
+end
+
 local function title_for(id)
   if titles[id] then return titles[id] end
   if misses[id] and vim.uv.now() - misses[id] < MISS_TTL_MS then return nil end
-  local note = require('notes.pandora').get(id)
-  if not note then
-    misses[id] = vim.uv.now()
-    return nil
-  end
-  misses[id] = nil
-  titles[id] = note.title
-  return note.title
+  if inflight[id] then return nil end
+  inflight[id] = true
+  require('notes.pandora').get_async(id, function(note)
+    inflight[id] = nil
+    if not note then
+      misses[id] = vim.uv.now()
+      return
+    end
+    misses[id] = nil
+    titles[id] = note.title
+    M.refresh_all()
+  end)
+  return nil
 end
 
 function M.set_title(id, title)
-  titles[id] = title
+  titles[id]   = title
+  misses[id]   = nil
+  inflight[id] = nil
+end
+
+function M.invalidate(id)
+  titles[id]   = nil
+  misses[id]   = nil
+  inflight[id] = nil
+end
+
+function M.refresh(bufnr)
+  if vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr) then
+    apply_highlights(bufnr)
+  end
+end
+
+function M.refresh_all()
+  for _, bufnr in ipairs(note_buffers()) do
+    apply_highlights(bufnr)
+  end
 end
 
 function M.link_under_cursor()
@@ -45,7 +85,7 @@ end
 
 -- Hides each [[link]] and draws its text in its place: the label when given,
 -- otherwise the target's title. Links are not rewritten, so saving keeps the IDs.
-local function apply_highlights(bufnr)
+apply_highlights = function(bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for lnum, line in ipairs(lines) do
@@ -57,11 +97,11 @@ local function apply_highlights(bufnr)
       local id   = tonumber(target:match('^%d+$'))
       local text = label or (id and title_for(id)) or target
       vim.api.nvim_buf_set_extmark(bufnr, ns, lnum - 1, s - 1, {
-        end_col      = e,
-        conceal      = '',
-        virt_text    = { { text, HL_GROUP } },
+        end_col       = e,
+        conceal       = '',
+        virt_text     = { { text, HL_GROUP } },
         virt_text_pos = 'inline',
-        priority     = 200,
+        priority      = 200,
       })
       search = e + 1
     end
@@ -71,11 +111,18 @@ end
 function M.attach(bufnr)
   local group = vim.api.nvim_create_augroup('NotesWikiLinks' .. bufnr, { clear = true })
 
+  for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
+    vim.wo[win].conceallevel = 2
+  end
+  apply_highlights(bufnr)
+
   vim.api.nvim_create_autocmd({ 'BufWinEnter', 'InsertLeave', 'TextChanged' }, {
     group    = group,
     buffer   = bufnr,
     callback = function(ev)
-      vim.wo.conceallevel = 2
+      for _, win in ipairs(vim.fn.win_findbuf(ev.buf)) do
+        vim.wo[win].conceallevel = 2
+      end
       apply_highlights(ev.buf)
     end,
   })
