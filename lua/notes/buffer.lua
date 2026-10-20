@@ -30,17 +30,23 @@ function M.reload(bufnr, note)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
   vim.bo[bufnr].modified = false
   wikilinks.set_title(note.id, note.title)
+  wikilinks.refresh(bufnr)
   if cursor then
     local row = math.min(cursor[1], vim.api.nvim_buf_line_count(bufnr))
     pcall(vim.api.nvim_win_set_cursor, win, { row, cursor[2] })
   end
 end
 
--- The first Markdown heading is the title, as Pandora keeps them equal.
+-- The first Markdown heading outside a fenced code block is the title, as Pandora keeps them equal.
 local function title_from(content)
+  local in_fence = false
   for line in content:gmatch('[^\n]*') do
-    local title = line:match('^#%s+(.-)%s*$')
-    if title then return title end
+    if line:match('^```') then
+      in_fence = not in_fence
+    elseif not in_fence then
+      local title = line:match('^#%s+(.-)%s*$')
+      if title then return title end
+    end
   end
 end
 
@@ -65,7 +71,6 @@ local function read(bufnr)
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(note.content, '\n', { plain = true }))
   vim.bo[bufnr].modified = false
-  vim.b[bufnr].pandora_note_id = id
   vim.bo[bufnr].filetype = 'markdown'
   wikilinks.set_title(id, note.title)
   wikilinks.attach(bufnr)
@@ -89,8 +94,13 @@ local function save(bufnr)
     vim.notify('Pandora save failed: ' .. err, vim.log.levels.ERROR)
     return
   end
-  wikilinks.set_title(id, note.title)
-  vim.bo[bufnr].modified = false
+  if note.content ~= content then
+    M.reload(bufnr, note)
+  else
+    wikilinks.set_title(id, note.title)
+    vim.bo[bufnr].modified = false
+  end
+  wikilinks.refresh_all()
   vim.notify('Saved "' .. note.title .. '" to Pandora')
 end
 

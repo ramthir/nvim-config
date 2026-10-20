@@ -32,7 +32,7 @@ end
 
 -- Calls the Pandora REST API. Returns the decoded body, or nil and a message.
 -- Request bodies go to curl on stdin, so note text is never part of a shell string.
-local function request(method, path, body)
+local function build_request(method, path, body)
   local base_url = require("notes").config.base_url
   local cmd = {
     "curl", "-sS", "--max-time", "10", "-X", method,
@@ -46,13 +46,15 @@ local function request(method, path, body)
     opts.stdin = vim.json.encode(body)
   end
   cmd[#cmd + 1] = base_url .. "/api/notes" .. path
+  return cmd, opts
+end
 
-  local res = vim.system(cmd, opts):wait()
+local function parse_response(res)
   if res.code ~= 0 then
     return nil, vim.trim(res.stderr or "request failed")
   end
 
-  local payload, status = res.stdout:match("^(.*)\n(%d+)$")
+  local payload, status = (res.stdout or ""):match("^(.*)\n(%d+)$")
   if not status then
     return nil, "invalid response from Pandora"
   end
@@ -68,6 +70,21 @@ local function request(method, path, body)
   return decoded
 end
 
+local function request(method, path, body)
+  local cmd, opts = build_request(method, path, body)
+  return parse_response(vim.system(cmd, opts):wait())
+end
+
+local function request_async(method, path, body, callback)
+  local cmd, opts = build_request(method, path, body)
+  vim.system(cmd, opts, function(res)
+    local decoded, err = parse_response(res)
+    vim.schedule(function()
+      callback(decoded, err)
+    end)
+  end)
+end
+
 -- One page of notes matching the query. Returns nil and a message on failure.
 function M.search(query, opts)
   opts = opts or {}
@@ -80,6 +97,10 @@ end
 
 function M.get(id)
   return request("GET", "/" .. id)
+end
+
+function M.get_async(id, callback)
+  return request_async("GET", "/" .. id, nil, callback)
 end
 
 function M.create(fields)
