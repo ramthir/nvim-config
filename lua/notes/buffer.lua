@@ -3,15 +3,15 @@ local M = {}
 local pandora   = require('notes.pandora')
 local wikilinks = require('notes.wikilinks')
 
-local PATTERN = 'pandora://note/*'
+local PATTERN = 'pandora://notes/*'
 
 local function buffer_name(id)
-  return 'pandora://note/' .. id
+  return 'pandora://notes/' .. id
 end
 
 -- Only digits are accepted, so nothing else from a typed path reaches a request.
 local function note_id(name)
-  return tonumber(name:match('^pandora://note/(%d+)$'))
+  return tonumber(name:match('^pandora://notes/(%d+)$'))
 end
 
 local function find_buffer(id)
@@ -44,7 +44,7 @@ local function title_from(content)
   end
 end
 
--- :edit pandora://note/123 and :edit! land here. The buffer is set up for saving
+-- :edit pandora://notes/123 and :edit! land here. The buffer is set up for saving
 -- first, so a note that fails to load is never written to a file by mistake.
 local function read(bufnr)
   vim.bo[bufnr].buftype  = 'acwrite'
@@ -53,7 +53,7 @@ local function read(bufnr)
   local name = vim.api.nvim_buf_get_name(bufnr)
   local id   = note_id(name)
   if not id then
-    vim.notify('Not a Pandora note path: ' .. name .. ' (use pandora://note/<id>)', vim.log.levels.ERROR)
+    vim.notify('Not a Pandora note path: ' .. name .. ' (use pandora://notes/<id>)', vim.log.levels.ERROR)
     return
   end
 
@@ -94,7 +94,7 @@ local function save(bufnr)
   vim.notify('Saved "' .. note.title .. '" to Pandora')
 end
 
--- Makes pandora://note/<id> a path Neovim can read and write.
+-- Makes pandora://notes/<id> a path Neovim can read and write.
 function M.setup()
   local group = vim.api.nvim_create_augroup('NotesBuffers', { clear = true })
 
