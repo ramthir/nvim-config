@@ -22,9 +22,29 @@ Notes live in Pandora. Neovim reads and writes them through Pandora's local API.
 - Copilot attaches to note buffers, so text from your notes is sent to GitHub Copilot as context.
 - There is no note search in Neovim.
 
+## Pandora Diagrams
+
+PlantUML diagrams live in Pandora. Neovim reads and writes them through Pandora's diagrams API. The behaviour is specified in the Pandora specification *Pandora — Neovim Diagrams* (note 1695).
+
+| To do this | Use |
+|---|---|
+| Open a diagram | `:edit pandora://diagrams/<id>` |
+| Open a diagram, short | `:Diagram <id>`, or `:diagram <id>` in lower case |
+| Open the diagram whose number is under the cursor, or be asked for an ID | `:Diagram` with no ID |
+| Save it to Pandora | `:write` |
+| Force save over a remote change | `:write!` |
+| Reload it from Pandora, discarding local edits | `:edit!` |
+
+- `<id>` is the diagram's number in Pandora.
+- Opened diagram buffers use the `plantuml` filetype.
+- `:write` checks whether the diagram changed in Pandora since the buffer was loaded or last saved, and refuses to overwrite when it has changed. `:write!` forces the save over the remote change.
+- `:edit!` discards unsaved edits and loads the current content from Pandora.
+- If opening or reloading a diagram fails, normal saves are blocked until `:edit!` successfully reloads it. `:write!` remains an explicit overwrite.
+- Copilot attaches to diagram buffers.
+
 ### Connection
 
-Neovim calls Pandora at `http://localhost`. To use another address, pass `base_url` to `require('notes').setup()` in `lua/plugins/notes.lua`.
+Neovim calls Pandora at `http://localhost`. To use another address, pass `base_url` to `require('notes').setup()` in `lua/plugins/notes.lua` or `require('diagrams').setup()` in `lua/plugins/diagrams.lua`.
 
 ### Where The Code Is
 
@@ -32,6 +52,9 @@ Neovim calls Pandora at `http://localhost`. To use another address, pass `base_u
 |---|---|
 | `lua/notes/buffer.lua` | Reads and writes `pandora://notes/<id>` and follows links |
 | `lua/notes/live.lua` | Keeps an event-stream connection open and reloads changed notes |
-| `lua/notes/pandora.lua` | Calls Pandora's API |
+| `lua/notes/pandora.lua` | Calls Pandora's notes API |
 | `lua/notes/wikilinks.lua` | Shows link titles |
 | `lua/notes/create.lua` | Creates notes |
+| `lua/diagrams/buffer.lua` | Reads and writes `pandora://diagrams/<id>` |
+| `lua/diagrams/api.lua` | Calls Pandora's diagrams API |
+| `lua/plugins/diagrams.lua` | Registers `:Diagram` command and sets up diagram buffers |
