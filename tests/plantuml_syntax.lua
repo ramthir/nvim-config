@@ -73,7 +73,7 @@ assert(trans_at(6, 3) == 'Identifier', 'Attribute name must link to Identifier')
 assert(group_at(6, 6) == 'plantumlDomainColon', 'Colon must match plantumlDomainColon')
 assert(fg('plantumlDomainColon') == '#939293', 'Domain colon must use muted gray (#939293)')
 assert(group_at(6, 8) == 'plantumlDomainType', 'ObjectId must match plantumlDomainType')
-assert(fg('plantumlDomainType') == '#78dce8', 'Attribute type must use Monokai Pro cyan (#78dce8)')
+assert(fg('plantumlDomainType') == '#939293', 'Attribute type must use subtle muted gray (#939293)')
 
 -- email: string
 assert(group_at(7, 3) == 'plantumlDomainAttribute', 'Attribute name email must match plantumlDomainAttribute')
@@ -111,7 +111,7 @@ assert(group_at(25, 43) == 'plantumlRelationshipLabel', 'Multi-word label "check
 vim.o.background = 'light'
 vim.cmd('doautocmd ColorScheme')
 assert(fg('plantumlRelationshipLabel') == '#706b6e', 'Relationship label in light mode must use #706b6e')
-assert(fg('plantumlDomainType') == '#1c8ca8', 'Attribute type in light mode must use #1c8ca8')
+assert(fg('plantumlDomainType') == '#706b6e', 'Attribute type in light mode must use #706b6e')
 assert(fg('plantumlDomainColon') == '#706b6e', 'Domain colon in light mode must use #706b6e')
 assert(fg('plantumlStereoAggregateRoot') == '#e16032', 'Aggregate Root in light mode must use #e16032')
 assert(fg('plantumlStereoValueObject') == '#269d69', 'Value Object in light mode must use #269d69')

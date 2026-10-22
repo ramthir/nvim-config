@@ -5,8 +5,7 @@
 " $green:  #a9dc76 (Value Object)
 " $purple: #ab9df2 (Enum)
 " $pink:   #ff61ae (Interface)
-" $blue:   #78dce8 (Attribute types)
-" $muted:  #939293 (Relationship link label, colons)
+" $muted:  #939293 (Relationship link label, colons, attribute types)
 syntax match plantumlStereoAggregateRoot /<<\s*Aggregate Root\s*>>/
 syntax match plantumlStereoValueObject  /<<\s*Value Object\s*>>/
 syntax match plantumlStereoEnum         /<<\s*Enum\s*>>/
@@ -18,7 +17,7 @@ function! s:apply_plantuml_colors() abort
     highlight plantumlStereoValueObject  guifg=#269d69 gui=bold ctermfg=29  cterm=bold
     highlight plantumlStereoEnum         guifg=#7058be gui=bold ctermfg=98  cterm=bold
     highlight plantumlStereoInterface    guifg=#e14775 gui=bold ctermfg=168 cterm=bold
-    highlight plantumlDomainType         guifg=#1c8ca8 ctermfg=31
+    highlight plantumlDomainType         guifg=#706b6e ctermfg=243
     highlight plantumlDomainColon        guifg=#706b6e ctermfg=243
     highlight plantumlRelationshipLabel  guifg=#706b6e ctermfg=243
   else
@@ -26,7 +25,7 @@ function! s:apply_plantuml_colors() abort
     highlight plantumlStereoValueObject  guifg=#a9dc76 gui=bold ctermfg=149 cterm=bold
     highlight plantumlStereoEnum         guifg=#ab9df2 gui=bold ctermfg=141 cterm=bold
     highlight plantumlStereoInterface    guifg=#ff61ae gui=bold ctermfg=205 cterm=bold
-    highlight plantumlDomainType         guifg=#78dce8 ctermfg=116
+    highlight plantumlDomainType         guifg=#939293 ctermfg=246
     highlight plantumlDomainColon        guifg=#939293 ctermfg=246
     highlight plantumlRelationshipLabel  guifg=#939293 ctermfg=246
   endif
@@ -46,7 +45,7 @@ syntax match plantumlDomainType      /\(:\s*\)\@<=[A-Za-z0-9_?\[\]]\+/ contained
 
 highlight default link plantumlDomainAttribute Identifier
 highlight default link plantumlDomainColon     Delimiter
-highlight default link plantumlDomainType      Type
+highlight default link plantumlDomainType      Comment
 
 " Relationship link labels (e.g. : sources, : index versions)
 syntax match plantumlRelationshipLabel /\S\@<=\s*\zs:\s*.\+$/

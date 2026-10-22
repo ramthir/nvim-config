@@ -46,7 +46,7 @@ PlantUML diagrams live in Pandora. Neovim reads and writes them through Pandora'
 
 PlantUML buffers and fenced markdown blocks include custom syntax highlighting matching Pandora domain model conventions and Monokai Pro colors:
 - **Stereotypes:** `<<Aggregate Root>>` (orange `#fc9867`), `<<Value Object>>` (green `#a9dc76`), `<<Enum>>` (purple `#ab9df2`), and `<<Interface>>` (pink `#ff61ae`) match Pandora's diagram theme palette.
-- **Attributes & Types:** In class bodies, `name: type` declarations highlight field names as properties/identifiers, colons as subtle gray (`#939293`), and types (`string`, `integer`, `ObjectId`, `UserRole[]`, `datetime?`) with Monokai Pro cyan (`#78dce8` dark, `#1c8ca8` light).
+- **Attributes & Types:** In class bodies, `name: type` declarations highlight field names as properties/identifiers (`#fcfcfa`), while colons and types (`ObjectId`, `string`, `KnowledgeSourceKind`, `datetime?`, `UserRole[]`) highlight in subtle muted gray (`#939293` dark, `#706b6e` light).
 - **Relationship Labels:** Labels on relationship lines (e.g. `: sources`, `: index versions`) highlight in subtle muted gray (`#939293` dark, `#706b6e` light).
 - **Enums:** `enum Name { ... }` blocks highlight bare member names matching class properties (`Identifier`).
 
