@@ -60,4 +60,4 @@ syntax region plantumlEnum
       \          plantumlComment
 
 syntax match plantumlEnumMember /^\s*\zs[A-Za-z0-9_]\+\ze\s*$/ contained
-highlight default link plantumlEnumMember Constant
+highlight default link plantumlEnumMember Identifier

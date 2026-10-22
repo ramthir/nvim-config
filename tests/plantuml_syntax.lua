@@ -92,7 +92,7 @@ assert(group_at(9, 23) == 'plantumlDomainType', 'Question mark must be included 
 -- 3. Enum Blocks and Members
 assert(group_at(16, 26) == 'plantumlEnum', 'Enum opening brace must match plantumlEnum')
 assert(group_at(17, 4) == 'plantumlEnumMember', 'Enum member ACTIVE must match plantumlEnumMember')
-assert(trans_at(17, 4) == 'Constant', 'Enum member must link to Constant')
+assert(trans_at(17, 4) == 'Identifier', 'Enum member must link to Identifier (matching class properties)')
 assert(group_at(18, 4) == 'plantumlEnumMember', 'Enum member INACTIVE must match plantumlEnumMember')
 assert(group_at(19, 1) == 'plantumlEnum', 'Enum closing brace must match plantumlEnum')
 

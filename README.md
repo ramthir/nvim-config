@@ -48,7 +48,7 @@ PlantUML buffers and fenced markdown blocks include custom syntax highlighting m
 - **Stereotypes:** `<<Aggregate Root>>` (orange `#fc9867`), `<<Value Object>>` (green `#a9dc76`), `<<Enum>>` (purple `#ab9df2`), and `<<Interface>>` (pink `#ff61ae`) match Pandora's diagram theme palette.
 - **Attributes & Types:** In class bodies, `name: type` declarations highlight field names as properties/identifiers, colons as subtle gray (`#939293`), and types (`string`, `integer`, `ObjectId`, `UserRole[]`, `datetime?`) with Monokai Pro cyan (`#78dce8` dark, `#1c8ca8` light).
 - **Relationship Labels:** Labels on relationship lines (e.g. `: sources`, `: index versions`) highlight in subtle muted gray (`#939293` dark, `#706b6e` light).
-- **Enums:** `enum Name { ... }` blocks highlight bare member names as constants.
+- **Enums:** `enum Name { ... }` blocks highlight bare member names matching class properties (`Identifier`).
 
 ### Connection
 
