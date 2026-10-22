@@ -33,6 +33,9 @@ vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
   '',
   'interface Authenticatable <<Interface>> {',
   '}',
+  '',
+  'User "1" --> "*" Address : addresses',
+  'User "1" -right-> "*" UserStatus : status check',
   '@enduml',
 })
 
@@ -91,6 +94,26 @@ assert(group_at(17, 4) == 'plantumlEnumMember', 'Enum member ACTIVE must match p
 assert(trans_at(17, 4) == 'Constant', 'Enum member must link to Constant')
 assert(group_at(18, 4) == 'plantumlEnumMember', 'Enum member INACTIVE must match plantumlEnumMember')
 assert(group_at(19, 1) == 'plantumlEnum', 'Enum closing brace must match plantumlEnum')
+
+-- 4. Relationship Link Labels
+-- User "1" --> "*" Address : addresses
+assert(group_at(24, 26) == 'plantumlRelationshipLabel', 'Colon in relationship line must match plantumlRelationshipLabel')
+assert(group_at(24, 28) == 'plantumlRelationshipLabel', 'Label "addresses" must match plantumlRelationshipLabel')
+assert(fg('plantumlRelationshipLabel') == '#939293', 'Relationship label must use subtle gray (#939293)')
+
+-- User "1" -right-> "*" UserStatus : status check
+assert(group_at(25, 34) == 'plantumlRelationshipLabel', 'Colon in multi-word relationship line must match plantumlRelationshipLabel')
+assert(group_at(25, 36) == 'plantumlRelationshipLabel', 'Multi-word label "status" must match plantumlRelationshipLabel')
+assert(group_at(25, 43) == 'plantumlRelationshipLabel', 'Multi-word label "check" must match plantumlRelationshipLabel')
+
+-- 5. Light Mode Support
+vim.o.background = 'light'
+vim.cmd('doautocmd ColorScheme')
+assert(fg('plantumlRelationshipLabel') == '#706b6e', 'Relationship label in light mode must use #706b6e')
+assert(fg('plantumlStereoAggregateRoot') == '#e16032', 'Aggregate Root in light mode must use #e16032')
+assert(fg('plantumlStereoValueObject') == '#269d69', 'Value Object in light mode must use #269d69')
+assert(fg('plantumlStereoEnum') == '#7058be', 'Enum in light mode must use #7058be')
+assert(fg('plantumlStereoInterface') == '#e14775', 'Interface in light mode must use #e14775')
 
 print('All plantuml domain model syntax checks passed successfully')
 vim.cmd('qa!')

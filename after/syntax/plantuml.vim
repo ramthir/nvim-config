@@ -5,6 +5,7 @@
 " $green:  #a9dc76 (Value Object)
 " $purple: #ab9df2 (Enum)
 " $pink:   #ff61ae (Interface)
+" $muted:  #939293 (Relationship link label)
 syntax match plantumlStereoAggregateRoot /<<\s*Aggregate Root\s*>>/
 syntax match plantumlStereoValueObject  /<<\s*Value Object\s*>>/
 syntax match plantumlStereoEnum         /<<\s*Enum\s*>>/
@@ -12,15 +13,17 @@ syntax match plantumlStereoInterface    /<<\s*Interface\s*>>/
 
 function! s:apply_plantuml_colors() abort
   if &background ==# 'light'
-    highlight default plantumlStereoAggregateRoot guifg=#e16032 gui=bold ctermfg=166 cterm=bold
-    highlight default plantumlStereoValueObject  guifg=#269d69 gui=bold ctermfg=29  cterm=bold
-    highlight default plantumlStereoEnum         guifg=#7058be gui=bold ctermfg=98  cterm=bold
-    highlight default plantumlStereoInterface    guifg=#e14775 gui=bold ctermfg=168 cterm=bold
+    highlight plantumlStereoAggregateRoot guifg=#e16032 gui=bold ctermfg=166 cterm=bold
+    highlight plantumlStereoValueObject  guifg=#269d69 gui=bold ctermfg=29  cterm=bold
+    highlight plantumlStereoEnum         guifg=#7058be gui=bold ctermfg=98  cterm=bold
+    highlight plantumlStereoInterface    guifg=#e14775 gui=bold ctermfg=168 cterm=bold
+    highlight plantumlRelationshipLabel  guifg=#706b6e ctermfg=243
   else
-    highlight default plantumlStereoAggregateRoot guifg=#fc9867 gui=bold ctermfg=209 cterm=bold
-    highlight default plantumlStereoValueObject  guifg=#a9dc76 gui=bold ctermfg=149 cterm=bold
-    highlight default plantumlStereoEnum         guifg=#ab9df2 gui=bold ctermfg=141 cterm=bold
-    highlight default plantumlStereoInterface    guifg=#ff61ae gui=bold ctermfg=205 cterm=bold
+    highlight plantumlStereoAggregateRoot guifg=#fc9867 gui=bold ctermfg=209 cterm=bold
+    highlight plantumlStereoValueObject  guifg=#a9dc76 gui=bold ctermfg=149 cterm=bold
+    highlight plantumlStereoEnum         guifg=#ab9df2 gui=bold ctermfg=141 cterm=bold
+    highlight plantumlStereoInterface    guifg=#ff61ae gui=bold ctermfg=205 cterm=bold
+    highlight plantumlRelationshipLabel  guifg=#939293 ctermfg=246
   endif
 endfunction
 
@@ -32,13 +35,17 @@ augroup PlantUMLColors
 augroup END
 
 " Domain model class attributes: name: type
-syntax match plantumlDomainAttribute /^\s*\zs[A-Za-z_][A-Za-z0-9_]*\ze\s*:/ containedin=plantumlClass
-syntax match plantumlDomainColon     /:/ containedin=plantumlClass
-syntax match plantumlDomainType      /\(:\s*\)\@<=[A-Za-z0-9_?\[\]]\+/ containedin=plantumlClass
+syntax match plantumlDomainAttribute /^\s*\zs[A-Za-z_][A-Za-z0-9_]*\ze\s*:/ contained containedin=plantumlClass
+syntax match plantumlDomainColon     /:/ contained containedin=plantumlClass
+syntax match plantumlDomainType      /\(:\s*\)\@<=[A-Za-z0-9_?\[\]]\+/ contained containedin=plantumlClass
 
 highlight default link plantumlDomainAttribute Identifier
 highlight default link plantumlDomainColon     Delimiter
 highlight default link plantumlDomainType      Type
+
+" Relationship link labels (e.g. : sources, : index versions)
+syntax match plantumlRelationshipLabel /\S\@<=\s*\zs:\s*.\+$/
+highlight default link plantumlRelationshipLabel Comment
 
 " Domain model enum blocks and enum members
 syntax region plantumlEnum
