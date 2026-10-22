@@ -42,6 +42,14 @@ PlantUML diagrams live in Pandora. Neovim reads and writes them through Pandora'
 - If opening or reloading a diagram fails, normal saves are blocked until `:edit!` successfully reloads it. `:write!` remains an explicit overwrite.
 - Copilot attaches to diagram buffers.
 
+### Domain Model Syntax Highlighting
+
+PlantUML buffers and fenced markdown blocks include custom syntax highlighting matching Pandora domain model conventions and Monokai Pro colors:
+- **Stereotypes:** `<<Aggregate Root>>` (orange `#fc9867`), `<<Value Object>>` (green `#a9dc76`), `<<Enum>>` (purple `#ab9df2`), and `<<Interface>>` (pink `#ff61ae`) match Pandora's diagram theme palette.
+- **Attributes & Types:** In class bodies, `name: type` declarations highlight field names as properties/identifiers (`#fcfcfa`), while colons and types (`ObjectId`, `string`, `KnowledgeSourceKind`, `datetime?`, `UserRole[]`) highlight in subtle muted gray (`#939293` dark, `#706b6e` light).
+- **Relationship Labels:** Labels on relationship lines (e.g. `: sources`, `: index versions`) highlight in subtle muted gray (`#939293` dark, `#706b6e` light).
+- **Enums:** `enum Name { ... }` blocks highlight bare member names matching class properties (`Identifier`).
+
 ### Connection
 
 Neovim calls Pandora at `http://localhost`. To use another address, pass `base_url` to `require('notes').setup()` in `lua/plugins/notes.lua` or `require('diagrams').setup()` in `lua/plugins/diagrams.lua`.
@@ -58,3 +66,4 @@ Neovim calls Pandora at `http://localhost`. To use another address, pass `base_u
 | `lua/diagrams/buffer.lua` | Reads and writes `pandora://diagrams/<id>` |
 | `lua/diagrams/api.lua` | Calls Pandora's diagrams API |
 | `lua/plugins/diagrams.lua` | Registers `:Diagram` command and sets up diagram buffers |
+| `after/syntax/plantuml.vim` | Domain model syntax highlighting and stereotype theme colors |
