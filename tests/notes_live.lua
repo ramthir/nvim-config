@@ -100,6 +100,16 @@ old(note('stale'))
 assert(content() == 'original', 'Stopping must invalidate pending reloads')
 
 live.start()
+-- A diagram with the same ID neither cancels the pending note reload nor reaches the note code.
+reset()
+event()
+local before = #requests
+event('diagram.updated')
+event('diagram.deleted')
+assert(#requests == before, 'Diagram events must not fetch notes')
+requests[#requests](note('remote'))
+assert(content() == 'remote', 'A diagram event must not cancel a pending note reload')
+
 event()
 old = requests[#requests]
 vim.api.nvim_buf_delete(buf, { force = true })
