@@ -110,6 +110,17 @@ assert(#requests == before, 'Diagram events must not fetch notes')
 requests[#requests](note('remote'))
 assert(content() == 'remote', 'A diagram event must not cancel a pending note reload')
 
+-- A failing diagram handler does not stop the note events after it.
+local diagrams_live = package.loaded['diagrams.live']
+package.loaded['diagrams.live'] = { on_event = function() error('boom') end }
+reset()
+event('diagram.updated')
+assert(notifications[#notifications]:match('Diagram update failed'))
+event()
+requests[#requests](note('after failure'))
+assert(content() == 'after failure', 'Note events must still be handled')
+package.loaded['diagrams.live'] = diagrams_live
+
 event()
 old = requests[#requests]
 vim.api.nvim_buf_delete(buf, { force = true })

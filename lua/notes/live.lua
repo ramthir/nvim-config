@@ -56,7 +56,9 @@ end
 
 -- Diagram events share the stream but not the ID space of notes, so they never reach the note code.
 local function on_diagram_event(event)
-  require('diagrams.live').on_event(event)
+  -- A fault in diagram handling must not stop the note events that follow it.
+  local ok, err = pcall(function() require('diagrams.live').on_event(event) end)
+  if not ok then vim.notify('Diagram update failed: ' .. tostring(err), vim.log.levels.WARN) end
 end
 
 local function reconcile_diagrams()
