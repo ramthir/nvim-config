@@ -39,6 +39,7 @@ PlantUML diagrams live in Pandora. Neovim reads and writes them through Pandora'
 - Opened diagram buffers use the `plantuml` filetype.
 - `:write` checks whether the diagram changed in Pandora since the buffer was loaded or last saved, and refuses to overwrite when it has changed. `:write!` forces the save over the remote change.
 - `:edit!` discards unsaved edits and loads the current content from Pandora.
+- An open diagram with no unsaved edits reloads when Pandora reports it updated by another client; with unsaved edits it is kept and a warning is shown, and a diagram deleted in Pandora shows a warning. A save made by the same Neovim does not reload its own buffer, and open diagrams are checked again when the event stream reconnects.
 - If opening or reloading a diagram fails, normal saves are blocked until `:edit!` successfully reloads it. `:write!` remains an explicit overwrite.
 - Copilot attaches to diagram buffers.
 
@@ -64,6 +65,7 @@ Neovim calls Pandora at `http://localhost`. To use another address, pass `base_u
 | `lua/notes/wikilinks.lua` | Shows link titles |
 | `lua/notes/create.lua` | Creates notes |
 | `lua/diagrams/buffer.lua` | Reads and writes `pandora://diagrams/<id>` |
+| `lua/diagrams/live.lua` | Reloads open diagrams, or warns, when Pandora reports them changed or deleted |
 | `lua/diagrams/api.lua` | Calls Pandora's diagrams API |
 | `lua/plugins/diagrams.lua` | Registers `:Diagram` command and sets up diagram buffers |
 | `after/syntax/plantuml.vim` | Domain model syntax highlighting and stereotype theme colors |
