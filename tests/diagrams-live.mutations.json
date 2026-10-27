@@ -1,0 +1,76 @@
+{
+  "test": [
+    "sh",
+    "-c",
+    "for t in diagrams_live notes_live; do nvim --headless -u NONE -i NONE -l tests/$t.lua || exit 1; done"
+  ],
+  "timeout": 120,
+  "mutations": [
+    {
+      "name": "diagram events reach the note code",
+      "file": "lua/notes/live.lua",
+      "replace": "    on_diagram_event(event)\n    return\n",
+      "with": "    on_diagram_event(event)\n"
+    },
+    {
+      "name": "reconnect does not check diagrams",
+      "file": "lua/notes/live.lua",
+      "replace": "          reconcile_diagrams()\n",
+      "with": ""
+    },
+    {
+      "name": "own save reloads",
+      "file": "lua/diagrams/live.lua",
+      "replace": "    if diagram.updated_at == baseline then return end\n",
+      "with": ""
+    },
+    {
+      "name": "unsaved edits are overwritten",
+      "file": "lua/diagrams/live.lua",
+      "replace": "    if vim.bo[bufnr].modified then\n      mark_conflict(bufnr)\n      return\n    end\n",
+      "with": ""
+    },
+    {
+      "name": "obsolete responses are applied",
+      "file": "lua/diagrams/live.lua",
+      "replace": "    if vim.b[bufnr].pandora_updated_at ~= baseline then return end\n",
+      "with": ""
+    },
+    {
+      "name": "edits made while fetching are lost",
+      "file": "lua/diagrams/live.lua",
+      "replace": "    if vim.api.nvim_buf_get_changedtick(bufnr) ~= tick then return end\n",
+      "with": ""
+    },
+    {
+      "name": "older requests are not superseded",
+      "file": "lua/diagrams/live.lua",
+      "replace": "    if pending[id] ~= request then return end\n",
+      "with": ""
+    },
+    {
+      "name": "deleted diagrams do not warn",
+      "file": "lua/diagrams/live.lua",
+      "replace": "    vim.notify('Diagram ' .. event.id .. ' was deleted on Pandora.', vim.log.levels.WARN)\n",
+      "with": ""
+    },
+    {
+      "name": "failed fetches are silent",
+      "file": "lua/diagrams/live.lua",
+      "replace": "      vim.notify('Could not refresh diagram ' .. id .. ': ' .. (err or 'request failed'), vim.log.levels.WARN)\n",
+      "with": ""
+    },
+    {
+      "name": "reconcile ignores open diagrams",
+      "file": "lua/diagrams/live.lua",
+      "replace": "      if id then refresh(id, bufnr) end\n",
+      "with": ""
+    },
+    {
+      "name": "a diagram fault stops the note events",
+      "file": "lua/notes/live.lua",
+      "replace": "  local ok, err = pcall(function() require('diagrams.live').on_event(event) end)\n  if not ok then vim.notify('Diagram update failed: ' .. tostring(err), vim.log.levels.WARN) end",
+      "with": "  require('diagrams.live').on_event(event)"
+    }
+  ]
+}
